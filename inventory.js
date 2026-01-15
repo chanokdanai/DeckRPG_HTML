@@ -290,8 +290,8 @@ Game.prototype.usePotion = function(index) {
     this.log(`Used ${potion.name} and drew ${stats.draw} card${stats.draw !== 1 ? 's' : ''}.`);
   }
   if(stats.attack) {
-    this.player.baseAttack = (this.player.baseAttack || 0) + stats.attack;
-    this.log(`Used ${potion.name} and gained ${stats.attack} attack.`);
+    this.player.tempAttack = (this.player.tempAttack || 0) + stats.attack;
+    this.log(`Used ${potion.name} and gained ${stats.attack} attack this combat.`);
   }
   this.potions[index] = null;
   this.updateInventoryUI();
@@ -401,7 +401,9 @@ Game.prototype.parseDragPayload = function(raw) {
   try {
     return JSON.parse(raw);
   } catch (err) {
-    console.warn('Failed to parse drag payload', raw, err);
+    if(this.log){
+      this.log('Drag payload invalid.');
+    }
     return {type:'equip', slot: raw};
   }
 };

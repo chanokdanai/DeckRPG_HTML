@@ -8,7 +8,7 @@ Game.prototype.startCombat = function(type){
   $("combat").classList.remove('hidden');
   $("nextRoomBtn").disabled = true;
   
-  const enemyCount = ENEMY_COUNTS[type] ?? ENEMY_COUNTS.combat;
+  const enemyCount = ENEMY_COUNTS[type] || ENEMY_COUNTS.combat;
   this.enemies = [];
   this.currentCombatType = type;
   for(let i = 0; i < enemyCount; i++){
@@ -186,7 +186,8 @@ Game.prototype.showDamageNumber = function(targetType, amount, enemyIndex){
   if(targetType === "player"){
     targetEl = $("playerArea");
   } else {
-    targetEl = document.querySelector(`.enemy-card[data-enemy-index="${enemyIndex}"]`);
+    const safeIndex = Number.isInteger(enemyIndex) && enemyIndex >= 0 ? enemyIndex : 0;
+    targetEl = document.querySelector(`.enemy-card[data-enemy-index="${safeIndex}"]`);
   }
   if(!targetEl) return;
   const floatEl = document.createElement('div');
@@ -232,6 +233,7 @@ Game.prototype.endTurn = function(){
 };
 
 Game.prototype.endCombat = function(victory){
+  this.player.tempAttack = 0;
   if(victory){
     const enemyCount = this.enemies.length || 1;
     const loot = 5 + rand(8);

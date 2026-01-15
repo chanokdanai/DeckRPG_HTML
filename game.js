@@ -202,6 +202,7 @@ class Game {
     this.player.energy = 3;
     this.player.maxEnergy = 3;
     this.player.baseAttack = 0;
+    this.player.tempAttack = 0;
     this.player.bonusDraw = 0;
     this.player.level = 1;
     this.player.exp = 0;

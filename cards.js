@@ -217,7 +217,10 @@ const ITEM_POOL = {
   }
 };
 
-const UNIQUE_RARITY_THRESHOLD = 1.15;
+const UNIQUE_RARITY_THRESHOLD = 0.99;
+const LEGENDARY_RARITY_THRESHOLD = 0.97;
+const RARE_RARITY_THRESHOLD = 0.85;
+const UNCOMMON_RARITY_THRESHOLD = 0.60;
 
 
 /* Get loot drops based on enemy/event type and rarity */
@@ -252,9 +255,9 @@ function generateLoot(sourceType, rarityBonus = 0) {
     const rarityRoll = Math.random() + rarityBonus;
     let rarity;
     if(rarityRoll > UNIQUE_RARITY_THRESHOLD) rarity = 'unique';
-    else if(rarityRoll > 0.97) rarity = 'legendary';
-    else if(rarityRoll > 0.85) rarity = 'rare';
-    else if(rarityRoll > 0.60) rarity = 'uncommon';
+    else if(rarityRoll > LEGENDARY_RARITY_THRESHOLD) rarity = 'legendary';
+    else if(rarityRoll > RARE_RARITY_THRESHOLD) rarity = 'rare';
+    else if(rarityRoll > UNCOMMON_RARITY_THRESHOLD) rarity = 'uncommon';
     else rarity = 'common';
     
     // Get item from pool
@@ -330,7 +333,7 @@ function createCardWithEffect(template, game) {
   let playFn;
   const getDamageAmount = (g, owner, base, options = {}) => {
     const statBonus = template.mainStat ? g.getAttributeValue(template.mainStat) : 0;
-    const attackBonus = owner.baseAttack || 0;
+    const attackBonus = (owner.baseAttack || 0) + (owner.tempAttack || 0);
     let amount = base + statBonus + attackBonus;
     if(options.isCombo){
       amount += template.comboBonus || 0;
