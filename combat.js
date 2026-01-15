@@ -22,8 +22,8 @@ Game.prototype.startCombat = function(type){
   this.enemy.atk = baseAtk;
   
   // Set Pokemon sprites using PokeAPI
-  // Player sprite (Pikachu - #25)
-  const playerSpriteId = 25;
+  // Player sprite (selected class or fallback to Pikachu - #25)
+  const playerSpriteId = this.playerSpriteId || 25;
   const playerSprite = $("playerSprite");
   playerSprite.style.backgroundImage = `url(https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${playerSpriteId}.png)`;
   
