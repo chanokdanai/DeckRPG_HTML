@@ -7,9 +7,31 @@ const rand = (n) => Math.floor(Math.random()*n);
 const clamp = (v,m,M) => Math.max(m,Math.min(M,v));
 
 /* Card definitions */
-function makeCard(id, name, cost, desc, playFn){
-  return { id, name, cost, desc, play: playFn };
+function makeCard(id, name, cost, desc, playFn, rarity='common'){
+  return { id, name, cost, desc, play: playFn, rarity };
 }
+
+/* Card pool for rewards and shop */
+const CARD_POOL = {
+  common: [
+    {id:'atk', name:'Strike', cost:1, desc:'Deal 6 damage', rarity:'common'},
+    {id:'def', name:'Defend', cost:1, desc:'Gain 6 block', rarity:'common'},
+    {id:'slash', name:'Slash', cost:1, desc:'Deal 7 damage', rarity:'common'},
+    {id:'shield', name:'Shield', cost:1, desc:'Gain 7 block', rarity:'common'},
+  ],
+  uncommon: [
+    {id:'heavy', name:'Heavy Strike', cost:2, desc:'Deal 12 damage', rarity:'uncommon'},
+    {id:'heal', name:'Heal', cost:1, desc:'Heal 8 HP', rarity:'uncommon'},
+    {id:'powerStrike', name:'Power Strike', cost:2, desc:'Deal 15 damage', rarity:'uncommon'},
+    {id:'ironWall', name:'Iron Wall', cost:2, desc:'Gain 12 block', rarity:'uncommon'},
+  ],
+  rare: [
+    {id:'bash', name:'Bash', cost:2, desc:'Deal 16 damage', rarity:'rare'},
+    {id:'rampage', name:'Rampage', cost:3, desc:'Deal 20 damage', rarity:'rare'},
+    {id:'impervious', name:'Impervious', cost:2, desc:'Gain 15 block', rarity:'rare'},
+    {id:'reaper', name:'Reaper', cost:2, desc:'Deal 8 damage, heal for damage dealt', rarity:'rare'},
+  ]
+};
 
 /* Game State */
 class Deck {
@@ -82,6 +104,8 @@ class Game {
     $("nextRoomBtn").addEventListener('click', ()=> this.nextRoom());
     $("endTurn").addEventListener('click', ()=> this.endTurn());
     $("drawBtn").addEventListener('click', ()=> { this.drawToFull(); updateUI(); });
+    $("skipReward").addEventListener('click', ()=> this.skipReward());
+    $("leaveShop").addEventListener('click', ()=> this.leaveShop());
   }
 
   resetPlayer(){
@@ -92,32 +116,85 @@ class Game {
   makeDeck(){
     // basic card set
     const cards = [];
-    const attack = (target, owner) => {
-      const dmg = 6;
-      const actual = target.takeDamage(dmg);
-      this.log(`${owner.name} deals ${actual} damage to ${target.name}.`);
-    };
-    const heavy = (target, owner) => {
-      const dmg = 10;
-      const actual = target.takeDamage(dmg);
-      this.log(`${owner.name} deals ${actual} heavy damage to ${target.name}.`);
-    };
-    const defend = (target, owner) => {
-      const block = 6;
-      owner.block += block;
-      this.log(`${owner.name} gains ${block} block.`);
-    };
-    const heal = (target, owner) => {
-      const amount = 6;
-      owner.heal(amount);
-      this.log(`${owner.name} heals ${amount} HP.`);
+    
+    // Card effect functions
+    const createCardWithEffect = (template) => {
+      let playFn;
+      switch(template.id){
+        case 'atk': case 'slash':
+          const atkDmg = template.id === 'slash' ? 7 : 6;
+          playFn = (g,owner,target) => {
+            const actual = target.takeDamage(atkDmg);
+            g.log(`${owner.name} deals ${actual} damage to ${target.name}.`);
+          };
+          break;
+        case 'def': case 'shield':
+          const defBlock = template.id === 'shield' ? 7 : 6;
+          playFn = (g,owner) => {
+            owner.block += defBlock;
+            g.log(`${owner.name} gains ${defBlock} block.`);
+          };
+          break;
+        case 'heavy':
+          playFn = (g,owner,target) => {
+            const actual = target.takeDamage(12);
+            g.log(`${owner.name} deals ${actual} heavy damage to ${target.name}.`);
+          };
+          break;
+        case 'heal':
+          playFn = (g,owner) => {
+            owner.heal(8);
+            g.log(`${owner.name} heals 8 HP.`);
+          };
+          break;
+        case 'bash':
+          playFn = (g,owner,target) => {
+            const actual = target.takeDamage(16);
+            g.log(`${owner.name} bashes for ${actual} damage!`);
+          };
+          break;
+        case 'powerStrike':
+          playFn = (g,owner,target) => {
+            const actual = target.takeDamage(15);
+            g.log(`${owner.name} power strikes for ${actual} damage!`);
+          };
+          break;
+        case 'ironWall':
+          playFn = (g,owner) => {
+            owner.block += 12;
+            g.log(`${owner.name} gains 12 block from iron wall.`);
+          };
+          break;
+        case 'rampage':
+          playFn = (g,owner,target) => {
+            const actual = target.takeDamage(20);
+            g.log(`${owner.name} rampages for ${actual} massive damage!`);
+          };
+          break;
+        case 'impervious':
+          playFn = (g,owner) => {
+            owner.block += 15;
+            g.log(`${owner.name} becomes impervious with 15 block.`);
+          };
+          break;
+        case 'reaper':
+          playFn = (g,owner,target) => {
+            const actual = target.takeDamage(8);
+            owner.heal(actual);
+            g.log(`${owner.name} reaps ${actual} damage and heals for ${actual}!`);
+          };
+          break;
+        default:
+          playFn = (g,owner) => g.log(`Played ${template.name}.`);
+      }
+      return makeCard(template.id, template.name, template.cost, template.desc, playFn, template.rarity);
     };
 
-    // populate deck: mostly attacks and defends
-    for(let i=0;i<6;i++) cards.push(makeCard('atk','Strike',1,'Deal 6 damage', (g,owner,target)=> attack(target,owner)));
-    for(let i=0;i<4;i++) cards.push(makeCard('def','Defend',1,'Gain 6 block', (g,owner)=> defend(null,owner)));
-    cards.push(makeCard('heavy','Heavy',2,'Deal 10 damage', (g,owner,target)=> heavy(target,owner)));
-    cards.push(makeCard('heal','Heal',1,'Heal 6 HP', (g,owner)=> heal(null,owner)));
+    // populate starting deck: mostly strikes and defends
+    for(let i=0;i<6;i++) cards.push(createCardWithEffect(CARD_POOL.common[0])); // Strike
+    for(let i=0;i<4;i++) cards.push(createCardWithEffect(CARD_POOL.common[1])); // Defend
+    cards.push(createCardWithEffect(CARD_POOL.uncommon[0])); // Heavy Strike
+    cards.push(createCardWithEffect(CARD_POOL.uncommon[1])); // Heal
 
     this.deck = new Deck(cards);
     updateUI();
@@ -180,21 +257,8 @@ class Game {
   }
 
   enterTreasure(){
-    // gain gold and maybe a random new card
-    const gained = 10 + rand(11);
-    this.gold += gained;
-    this.log(`Found treasure: +${gained} gold.`);
-    // sometimes add a new strong card
-    if(Math.random() > 0.6){
-      const newCard = makeCard('pwr','Bash',2,'Deal 14 damage', (g,owner,target)=>{
-        const dmg = 14;
-        const actual = target.takeDamage(dmg);
-        this.log(`${owner.name} deals ${actual} bash damage to ${target.name}.`);
-      });
-      this.deck.discard.push(newCard);
-      this.log('Found a new card (Bash) added to discard pile.');
-    }
-    updateUI();
+    // Show shop with cards for purchase
+    this.showShop();
   }
 
   startCombat(type){
@@ -284,6 +348,9 @@ class Game {
       const loot = 5 + rand(8);
       this.gold += loot;
       this.log(`Loot: +${loot} gold.`);
+      // Show card rewards
+      this.showCardRewards();
+      return; // Don't proceed to next room yet
     } else {
       this.log('Fled or defeated.');
     }
@@ -294,6 +361,270 @@ class Game {
     $("playerArea").style.display = '';
     this.deck.discard.push(...this.deck.hand);
     this.deck.hand = [];
+    updateUI();
+  }
+
+  showCardRewards(){
+    $("combat").classList.add('hidden');
+    $("reward").classList.remove('hidden');
+    $("nextRoomBtn").disabled = true;
+    
+    // Generate 3 random cards to choose from
+    const rewards = [];
+    for(let i=0; i<3; i++){
+      const rarity = Math.random();
+      let pool;
+      if(rarity > 0.85) pool = CARD_POOL.rare;
+      else if(rarity > 0.5) pool = CARD_POOL.uncommon;
+      else pool = CARD_POOL.common;
+      
+      const template = pool[rand(pool.length)];
+      rewards.push(template);
+    }
+    
+    const rewardsEl = $("cardRewards");
+    rewardsEl.innerHTML = '';
+    rewards.forEach((template, idx) => {
+      const div = document.createElement('div');
+      div.className = `card ${template.rarity}`;
+      div.innerHTML = `<div><span class="title">${template.name}</span><span class="cost">${template.cost}</span></div>
+        <div class="small">${template.desc}</div>
+        <div class="small" style="margin-top:4px;color:#888">${template.rarity}</div>`;
+      div.addEventListener('click', ()=> this.selectReward(template));
+      rewardsEl.appendChild(div);
+    });
+    updateUI();
+  }
+
+  selectReward(template){
+    // Add the selected card to the deck
+    const createCardWithEffect = (template) => {
+      let playFn;
+      switch(template.id){
+        case 'atk': case 'slash':
+          const atkDmg = template.id === 'slash' ? 7 : 6;
+          playFn = (g,owner,target) => {
+            const actual = target.takeDamage(atkDmg);
+            g.log(`${owner.name} deals ${actual} damage to ${target.name}.`);
+          };
+          break;
+        case 'def': case 'shield':
+          const defBlock = template.id === 'shield' ? 7 : 6;
+          playFn = (g,owner) => {
+            owner.block += defBlock;
+            g.log(`${owner.name} gains ${defBlock} block.`);
+          };
+          break;
+        case 'heavy':
+          playFn = (g,owner,target) => {
+            const actual = target.takeDamage(12);
+            g.log(`${owner.name} deals ${actual} heavy damage to ${target.name}.`);
+          };
+          break;
+        case 'heal':
+          playFn = (g,owner) => {
+            owner.heal(8);
+            g.log(`${owner.name} heals 8 HP.`);
+          };
+          break;
+        case 'bash':
+          playFn = (g,owner,target) => {
+            const actual = target.takeDamage(16);
+            g.log(`${owner.name} bashes for ${actual} damage!`);
+          };
+          break;
+        case 'powerStrike':
+          playFn = (g,owner,target) => {
+            const actual = target.takeDamage(15);
+            g.log(`${owner.name} power strikes for ${actual} damage!`);
+          };
+          break;
+        case 'ironWall':
+          playFn = (g,owner) => {
+            owner.block += 12;
+            g.log(`${owner.name} gains 12 block from iron wall.`);
+          };
+          break;
+        case 'rampage':
+          playFn = (g,owner,target) => {
+            const actual = target.takeDamage(20);
+            g.log(`${owner.name} rampages for ${actual} massive damage!`);
+          };
+          break;
+        case 'impervious':
+          playFn = (g,owner) => {
+            owner.block += 15;
+            g.log(`${owner.name} becomes impervious with 15 block.`);
+          };
+          break;
+        case 'reaper':
+          playFn = (g,owner,target) => {
+            const actual = target.takeDamage(8);
+            owner.heal(actual);
+            g.log(`${owner.name} reaps ${actual} damage and heals for ${actual}!`);
+          };
+          break;
+        default:
+          playFn = (g,owner) => g.log(`Played ${template.name}.`);
+      }
+      return makeCard(template.id, template.name, template.cost, template.desc, playFn, template.rarity);
+    };
+    
+    const newCard = createCardWithEffect(template);
+    this.deck.discard.push(newCard);
+    this.log(`Added ${template.name} to your deck!`);
+    this.closeRewardScreen();
+  }
+
+  skipReward(){
+    this.log('Skipped card reward.');
+    this.closeRewardScreen();
+  }
+
+  closeRewardScreen(){
+    $("reward").classList.add('hidden');
+    this.enemy = null;
+    $("nextRoomBtn").disabled = false;
+    this.deck.discard.push(...this.deck.hand);
+    this.deck.hand = [];
+    updateUI();
+  }
+
+  showShop(){
+    $("shop").classList.remove('hidden');
+    $("nextRoomBtn").disabled = true;
+    
+    // Generate shop inventory
+    const shopItems = [];
+    for(let i=0; i<5; i++){
+      const rarity = Math.random();
+      let pool, price;
+      if(rarity > 0.9) {
+        pool = CARD_POOL.rare;
+        price = 75 + rand(26);
+      } else if(rarity > 0.5) {
+        pool = CARD_POOL.uncommon;
+        price = 40 + rand(21);
+      } else {
+        pool = CARD_POOL.common;
+        price = 25 + rand(16);
+      }
+      
+      const template = pool[rand(pool.length)];
+      shopItems.push({...template, price});
+    }
+    
+    const shopEl = $("shopCards");
+    shopEl.innerHTML = '';
+    shopItems.forEach((item) => {
+      const div = document.createElement('div');
+      div.className = `card ${item.rarity}`;
+      const canAfford = this.gold >= item.price;
+      div.innerHTML = `<div><span class="title">${item.name}</span><span class="cost">${item.cost}</span></div>
+        <div class="small">${item.desc}</div>
+        <div class="small" style="margin-top:4px;color:#888">${item.rarity}</div>
+        <div style="margin-top:8px;font-weight:700;color:${canAfford?'#ffcc33':'#666'}">${item.price} Gold</div>`;
+      if(canAfford){
+        div.addEventListener('click', ()=> this.buyCard(item));
+      } else {
+        div.style.opacity = '0.5';
+        div.style.cursor = 'not-allowed';
+      }
+      shopEl.appendChild(div);
+    });
+    updateUI();
+  }
+
+  buyCard(item){
+    if(this.gold < item.price){
+      this.log('Not enough gold!');
+      return;
+    }
+    
+    this.gold -= item.price;
+    
+    const createCardWithEffect = (template) => {
+      let playFn;
+      switch(template.id){
+        case 'atk': case 'slash':
+          const atkDmg = template.id === 'slash' ? 7 : 6;
+          playFn = (g,owner,target) => {
+            const actual = target.takeDamage(atkDmg);
+            g.log(`${owner.name} deals ${actual} damage to ${target.name}.`);
+          };
+          break;
+        case 'def': case 'shield':
+          const defBlock = template.id === 'shield' ? 7 : 6;
+          playFn = (g,owner) => {
+            owner.block += defBlock;
+            g.log(`${owner.name} gains ${defBlock} block.`);
+          };
+          break;
+        case 'heavy':
+          playFn = (g,owner,target) => {
+            const actual = target.takeDamage(12);
+            g.log(`${owner.name} deals ${actual} heavy damage to ${target.name}.`);
+          };
+          break;
+        case 'heal':
+          playFn = (g,owner) => {
+            owner.heal(8);
+            g.log(`${owner.name} heals 8 HP.`);
+          };
+          break;
+        case 'bash':
+          playFn = (g,owner,target) => {
+            const actual = target.takeDamage(16);
+            g.log(`${owner.name} bashes for ${actual} damage!`);
+          };
+          break;
+        case 'powerStrike':
+          playFn = (g,owner,target) => {
+            const actual = target.takeDamage(15);
+            g.log(`${owner.name} power strikes for ${actual} damage!`);
+          };
+          break;
+        case 'ironWall':
+          playFn = (g,owner) => {
+            owner.block += 12;
+            g.log(`${owner.name} gains 12 block from iron wall.`);
+          };
+          break;
+        case 'rampage':
+          playFn = (g,owner,target) => {
+            const actual = target.takeDamage(20);
+            g.log(`${owner.name} rampages for ${actual} massive damage!`);
+          };
+          break;
+        case 'impervious':
+          playFn = (g,owner) => {
+            owner.block += 15;
+            g.log(`${owner.name} becomes impervious with 15 block.`);
+          };
+          break;
+        case 'reaper':
+          playFn = (g,owner,target) => {
+            const actual = target.takeDamage(8);
+            owner.heal(actual);
+            g.log(`${owner.name} reaps ${actual} damage and heals for ${actual}!`);
+          };
+          break;
+        default:
+          playFn = (g,owner) => g.log(`Played ${template.name}.`);
+      }
+      return makeCard(template.id, template.name, template.cost, template.desc, playFn, template.rarity);
+    };
+    
+    const newCard = createCardWithEffect(item);
+    this.deck.discard.push(newCard);
+    this.log(`Purchased ${item.name} for ${item.price} gold!`);
+    this.showShop(); // Refresh shop display
+  }
+
+  leaveShop(){
+    $("shop").classList.add('hidden');
+    $("nextRoomBtn").disabled = false;
+    this.log('Left the shop.');
     updateUI();
   }
 }

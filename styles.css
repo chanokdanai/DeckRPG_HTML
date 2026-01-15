@@ -14,7 +14,7 @@ h1{margin:0;font-size:1.1rem}
 #meta{display:flex;gap:12px;color:var(--muted);font-size:0.95rem}
 
 main{display:grid;grid-template-columns:320px 1fr;gap:16px;padding:18px}
-#dungeon, #combat, #logArea{background:var(--panel);padding:12px;border-radius:8px;min-height:140px}
+#dungeon, #combat, #logArea, #reward, #shop{background:var(--panel);padding:12px;border-radius:8px;min-height:140px}
 #dungeon{display:flex;flex-direction:column;gap:10px;align-items:flex-start}
 #roomInfo{color:var(--muted)}
 .primary{background:var(--accent);border:none;padding:8px 12px;border-radius:6px;color:#081426;font-weight:700;cursor:pointer}
@@ -30,8 +30,13 @@ main{display:grid;grid-template-columns:320px 1fr;gap:16px;padding:18px}
 
 .card{
   min-width:120px;padding:8px;border-radius:6px;background:var(--card);box-shadow:0 2px 8px rgba(0,0,0,0.5);
-  cursor:pointer;border:1px solid rgba(255,255,255,0.03)
+  cursor:pointer;border:1px solid rgba(255,255,255,0.03);transition:transform 0.2s,box-shadow 0.2s
 }
+.card:hover{transform:translateY(-4px);box-shadow:0 4px 12px rgba(0,0,0,0.7)}
+.card.common{border-color:rgba(155,155,155,0.3)}
+.card.uncommon{border-color:rgba(82,196,26,0.5)}
+.card.rare{border-color:rgba(24,144,255,0.6)}
+#cardRewards,#shopCards{display:flex;gap:12px;flex-wrap:wrap;margin:12px 0}
 .card .title{font-weight:700;color:#ffffff}
 .card .cost{float:right;background:#0b2a44;padding:2px 6px;border-radius:4px;font-weight:700}
 .small{font-size:0.85rem;color:var(--muted)}
