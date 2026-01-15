@@ -1,0 +1,354 @@
+// Mini DeckRPG prototype
+// Save these three files together and open index.html
+
+// Utility
+const $ = id => document.getElementById(id);
+const rand = (n) => Math.floor(Math.random()*n);
+const clamp = (v,m,M) => Math.max(m,Math.min(M,v));
+
+/* Card definitions */
+function makeCard(id, name, cost, desc, playFn){
+  return { id, name, cost, desc, play: playFn };
+}
+
+/* Game State */
+class Deck {
+  constructor(cards){
+    this.drawPile = [...cards];
+    this.discard = [];
+    this.hand = [];
+    this.shuffle();
+  }
+  shuffle(){
+    for(let i=this.drawPile.length-1;i>0;i--){
+      const j = rand(i+1);
+      [this.drawPile[i], this.drawPile[j]] = [this.drawPile[j], this.drawPile[i]];
+    }
+  }
+  draw(n=1){
+    while(n-- > 0){
+      if(this.drawPile.length===0){
+        if(this.discard.length===0) return null;
+        this.drawPile = this.discard.splice(0);
+        this.shuffle();
+      }
+      const c = this.drawPile.shift();
+      this.hand.push(c);
+    }
+  }
+  playCard(index){
+    const [c] = this.hand.splice(index,1);
+    this.discard.push(c);
+    return c;
+  }
+  discardHand(){
+    this.discard.push(...this.hand);
+    this.hand = [];
+  }
+}
+
+class Entity {
+  constructor(name, hp, maxHp){
+    this.name = name;
+    this.hp = hp;
+    this.maxHp = maxHp;
+    this.block = 0;
+  }
+  takeDamage(amount){
+    const mitigated = Math.max(0, amount - this.block);
+    const usedBlock = Math.min(this.block, amount);
+    this.block -= usedBlock;
+    this.hp -= mitigated;
+    return mitigated;
+  }
+  heal(amount){
+    this.hp = clamp(this.hp + amount, 0, this.maxHp);
+  }
+}
+
+class Game {
+  constructor(){
+    this.roomCount = 8 + rand(5);
+    this.currentRoom = -1;
+    this.gold = 0;
+    this.setupUI();
+    this.resetPlayer();
+    this.makeDeck();
+    this.log("Welcome to DeckRPG! Click Start Run to generate a dungeon.");
+    $("roomCount").textContent = this.roomCount;
+  }
+
+  setupUI(){
+    $("nextRoomBtn").addEventListener('click', ()=> this.nextRoom());
+    $("endTurn").addEventListener('click', ()=> this.endTurn());
+    $("drawBtn").addEventListener('click', ()=> { this.drawToFull(); updateUI(); });
+  }
+
+  resetPlayer(){
+    this.player = new Entity("You", 50, 50);
+    this.player.energy = 3;
+  }
+
+  makeDeck(){
+    // basic card set
+    const cards = [];
+    const attack = (target, owner) => {
+      const dmg = 6;
+      const actual = target.takeDamage(dmg);
+      this.log(`${owner.name} deals ${actual} damage to ${target.name}.`);
+    };
+    const heavy = (target, owner) => {
+      const dmg = 10;
+      const actual = target.takeDamage(dmg);
+      this.log(`${owner.name} deals ${actual} heavy damage to ${target.name}.`);
+    };
+    const defend = (target, owner) => {
+      const block = 6;
+      owner.block += block;
+      this.log(`${owner.name} gains ${block} block.`);
+    };
+    const heal = (target, owner) => {
+      const amount = 6;
+      owner.heal(amount);
+      this.log(`${owner.name} heals ${amount} HP.`);
+    };
+
+    // populate deck: mostly attacks and defends
+    for(let i=0;i<6;i++) cards.push(makeCard('atk','Strike',1,'Deal 6 damage', (g,owner,target)=> attack(target,owner)));
+    for(let i=0;i<4;i++) cards.push(makeCard('def','Defend',1,'Gain 6 block', (g,owner)=> defend(null,owner)));
+    cards.push(makeCard('heavy','Heavy',2,'Deal 10 damage', (g,owner,target)=> heavy(target,owner)));
+    cards.push(makeCard('heal','Heal',1,'Heal 6 HP', (g,owner)=> heal(null,owner)));
+
+    this.deck = new Deck(cards);
+    updateUI();
+  }
+
+  log(msg){
+    const el = $("log");
+    const p = document.createElement('div');
+    p.textContent = msg;
+    el.prepend(p);
+  }
+
+  generateDungeon(){
+    this.rooms = [];
+    for(let i=0;i<this.roomCount;i++){ 
+      // weighted: mostly combat, some rest and treasure
+      const roll = Math.random();
+      let type = 'combat';
+      if(roll > 0.88) type = 'elite';
+      else if(roll > 0.78) type = 'treasure';
+      else if(roll > 0.68) type = 'rest';
+      this.rooms.push({ index: i, type });
+    }
+  }
+
+  nextRoom(){
+    if(this.currentRoom === -1){
+      // start run
+      this.generateDungeon();
+      this.currentRoom = -1;
+      $("nextRoomBtn").textContent = 'Enter Next Room';
+      $("nextRoomBtn").classList.add('primary');
+    }
+    this.currentRoom++;
+    if(this.currentRoom >= this.roomCount){
+      this.log("You reached the end of the dungeon. Victory!");
+      $("nextRoomBtn").disabled = true;
+      return;
+    }
+    $("roomIndex").textContent = this.currentRoom + 1;
+    const room = this.rooms[this.currentRoom];
+    $("roomInfo").textContent = `Room ${this.currentRoom +1 }: ${room.type.toUpperCase()}`;
+    if(room.type === 'combat' || room.type==='elite'){
+      this.startCombat(room.type);
+    } else if(room.type === 'rest'){
+      this.enterRest();
+    } else if(room.type === 'treasure'){
+      this.enterTreasure();
+    } else {
+      this.log('Empty room.');
+    }
+  }
+
+  enterRest(){
+    // simple rest: restore some HP and draw and reshuffle one card
+    const heal = Math.floor(this.player.maxHp * 0.2);
+    this.player.heal(heal);
+    this.log(`Rest: healed ${heal} HP.`);
+    updateUI();
+  }
+
+  enterTreasure(){
+    // gain gold and maybe a random new card
+    const gained = 10 + rand(11);
+    this.gold += gained;
+    this.log(`Found treasure: +${gained} gold.`);
+    // sometimes add a new strong card
+    if(Math.random() > 0.6){
+      const newCard = makeCard('pwr','Bash',2,'Deal 14 damage', (g,owner,target)=>{
+        const dmg = 14;
+        const actual = target.takeDamage(dmg);
+        this.log(`${owner.name} deals ${actual} bash damage to ${target.name}.`);
+      });
+      this.deck.discard.push(newCard);
+      this.log('Found a new card (Bash) added to discard pile.');
+    }
+    updateUI();
+  }
+
+  startCombat(type){
+    $("combat").classList.remove('hidden');
+    $("nextRoomBtn").disabled = true;
+    const baseHp = type==='elite' ? 36 + rand(10) : 20 + rand(12);
+    const baseAtk = type==='elite' ? 8 + rand(4) : 5 + rand(3);
+    this.enemy = new Entity(type==='elite' ? 'Elite' : 'Goblin', baseHp, baseHp);
+    this.enemy.atk = baseAtk;
+    this.log(`Encountered ${this.enemy.name} (HP ${this.enemy.hp}, ATK ${this.enemy.atk})`);
+    // reset block/energy and draw
+    this.player.block = 0;
+    this.player.energy = 3;
+    this.deck.discardHand(); // discard any leftover hand at new combat start
+    // draw initial hand
+    this.drawToFull();
+    updateUI();
+  }
+
+  drawToFull(){
+    // hand size 5
+    const handSize = 5;
+    while(this.deck.hand.length < handSize){
+      this.deck.draw(1);
+    }
+    this.log('Drew cards.');
+    updateUI();
+  }
+
+  playCardFromHand(index){
+    const card = this.deck.hand[index];
+    if(!card) return;
+    if(this.player.energy < card.cost){
+      this.log('Not enough energy.');
+      return;
+    }
+    this.player.energy -= card.cost;
+    // play effect; provide references: game, owner, target
+    // some cards target enemy, some affect owner
+    try {
+      card.play(this, this.player, this.enemy);
+    } catch(e){
+      // fallback
+      this.log(`Played ${card.name}.`);
+    }
+    this.deck.playCard(index);
+    // check enemy death
+    if(this.enemy && this.enemy.hp <= 0){
+      this.log(`${this.enemy.name} defeated!`);
+      this.endCombat(true);
+      return;
+    }
+    updateUI();
+  }
+
+  enemyTurn(){
+    if(!this.enemy) return;
+    const atk = this.enemy.atk + rand(3);
+    const dmg = this.player.takeDamage(atk);
+    this.log(`${this.enemy.name} attacks for ${atk} (${dmg} damage after block).`);
+    if(this.player.hp <= 0){
+      this.log("You died. Run over.");
+      $("endTurn").disabled = true;
+      $("nextRoomBtn").disabled = true;
+      updateUI();
+      return;
+    }
+    updateUI();
+  }
+
+  endTurn(){
+    // enemy acts
+    this.enemyTurn();
+    // refresh energy and draw a new hand
+    if(this.enemy && this.enemy.hp > 0){
+      this.player.energy = 3;
+      // discard hand after turn
+      this.deck.discard.push(...this.deck.hand);
+      this.deck.hand = [];
+      this.drawToFull();
+    }
+    updateUI();
+  }
+
+  endCombat(victory){
+    if(victory){
+      const loot = 5 + rand(8);
+      this.gold += loot;
+      this.log(`Loot: +${loot} gold.`);
+    } else {
+      this.log('Fled or defeated.');
+    }
+    // clean up
+    this.enemy = null;
+    $("combat").classList.add('hidden');
+    $("nextRoomBtn").disabled = false;
+    $("playerArea").style.display = '';
+    this.deck.discard.push(...this.deck.hand);
+    this.deck.hand = [];
+    updateUI();
+  }
+}
+
+/* UI helpers */
+function updateUI(){
+  const g = window.G;
+  if(!g) return;
+  $("gold").textContent = g.gold;
+  $("roomIndex").textContent = (g.currentRoom >=0 ? g.currentRoom+1 : 0);
+  $("roomCount").textContent = g.roomCount;
+
+  // player stats
+  $("playerHp").style.width = (g.player.hp / g.player.maxHp * 100) + '%';
+  $("playerHp").style.background = 'linear-gradient(90deg,var(--hp-green),#18b39b)';
+  $("playerStats").textContent = `HP: ${g.player.hp}/${g.player.maxHp}  Block: ${g.player.block}`;
+
+  // enemy
+  if(g.enemy){
+    $("enemyName").textContent = g.enemy.name;
+    $("enemyHp").style.width = (g.enemy.hp / g.enemy.maxHp * 100) + '%';
+    $("enemyStats").textContent = `HP: ${g.enemy.hp}/${g.enemy.maxHp}  ATK: ${g.enemy.atk}`;
+    $("combat").classList.remove('hidden');
+  } else {
+    $("enemyName").textContent = '';
+    $("enemyHp").style.width = '0%';
+    $("enemyStats").textContent = '';
+    // hide only if not in combat
+  }
+
+  // deck counts
+  $("deckCount").textContent = g.deck.drawPile.length;
+  $("discardCount").textContent = g.deck.discard.length;
+  $("energy").textContent = g.player.energy ?? 0;
+
+  // hand UI
+  const handEl = $("hand");
+  handEl.innerHTML = '';
+  g.deck.hand.forEach((c,i) => {
+    const div = document.createElement('div');
+    div.className = 'card';
+    div.innerHTML = `<div><span class="title">${c.name}</span><span class="cost">${c.cost}</span></div>
+      <div class="small">${c.desc}</div>`;
+    div.addEventListener('click', ()=> {
+      g.playCardFromHand(i);
+    });
+    handEl.appendChild(div);
+  });
+}
+
+/* bootstrap */
+window.addEventListener('load', ()=>{
+  window.G = new Game();
+  updateUI();
+
+  // make hand clickable by delegating to Game.playCardFromHand
+  // (already wired up)
+});
