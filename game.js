@@ -368,7 +368,8 @@ class Game {
     // Set Pokemon sprites using PokeAPI
     // Player sprite (Pikachu - #25)
     const playerSpriteId = 25;
-    $("playerSprite").style.backgroundImage = `url(https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${playerSpriteId}.png)`;
+    const playerSprite = $("playerSprite");
+    playerSprite.style.backgroundImage = `url(https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${playerSpriteId}.png)`;
     
     // Enemy sprite - random Pokemon based on enemy type
     let enemySpriteId;
@@ -376,10 +377,12 @@ class Game {
       // Elite enemies use stronger Pokemon (150-200 range)
       enemySpriteId = 150 + rand(51);
     } else {
-      // Normal enemies use weaker Pokemon (1-100 range)
-      enemySpriteId = 1 + rand(100);
+      // Normal enemies use common Pokemon (1-100 range, avoiding potential gaps)
+      const commonPokemon = [1,4,7,10,13,16,19,23,25,27,29,32,35,37,39,41,43,46,48,50,52,54,56,58,60,63,66,69,72,74,77,79,81,84,86,88,90,92,95,98];
+      enemySpriteId = commonPokemon[rand(commonPokemon.length)];
     }
-    $("enemySprite").style.backgroundImage = `url(https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${enemySpriteId}.png)`;
+    const enemySprite = $("enemySprite");
+    enemySprite.style.backgroundImage = `url(https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${enemySpriteId}.png)`;
     
     this.log(`Encountered ${this.enemy.name} (HP ${this.enemy.hp}, ATK ${this.enemy.atk})`);
     // reset block/energy and draw
