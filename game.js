@@ -1029,6 +1029,7 @@ class Game {
     rewards.forEach((template, idx) => {
       const div = document.createElement('div');
       div.className = `card ${template.rarity}`;
+      div.setAttribute('data-description', `${template.desc}\n\nCost: ${template.cost} Energy\nRarity: ${template.rarity.toUpperCase()}`);
       div.innerHTML = `<div><span class="title">${template.name}</span><span class="cost">${template.cost}</span></div>
         <div class="small">${template.desc}</div>
         <div class="small" style="margin-top:4px;color:#888">${template.rarity}</div>`;
@@ -1076,6 +1077,7 @@ class Game {
     shopItems.forEach((item) => {
       const div = document.createElement('div');
       div.className = `card ${item.rarity}`;
+      div.setAttribute('data-description', `${item.desc}\n\nCost: ${item.cost} Energy\nRarity: ${item.rarity.toUpperCase()}\nPrice: ${item.price} Gold`);
       const canAfford = this.gold >= item.price;
       div.innerHTML = `<div><span class="title">${item.name}</span><span class="cost">${item.cost}</span></div>
         <div class="small">${item.desc}</div>
@@ -1470,6 +1472,8 @@ function updateUI(){
   g.deck.hand.forEach((c,i) => {
     const div = document.createElement('div');
     div.className = 'card';
+    if(c.rarity) div.classList.add(c.rarity);
+    div.setAttribute('data-description', `${c.desc}\n\nCost: ${c.cost} Energy${c.rarity ? '\nRarity: ' + c.rarity.toUpperCase() : ''}`);
     div.innerHTML = `<div><span class="title">${c.name}</span><span class="cost">${c.cost}</span></div>
       <div class="small">${c.desc}</div>`;
     div.addEventListener('click', ()=> {

@@ -146,41 +146,113 @@ main{display:grid;grid-template-columns:320px 1fr 280px;gap:16px;padding:18px}
 .hp{height:100%;background:linear-gradient(90deg,var(--hp-green),#18b39b);transition:width 0.3s ease}
 #enemyStats,#playerStats{color:var(--muted);font-size:0.95rem}
 
-#handArea{background:transparent;padding:6px;border-radius:6px}
-#hand{display:flex;gap:8px;flex-wrap:wrap}
+#handArea{background:transparent;padding:6px;border-radius:6px;perspective:1000px}
+#hand{
+  display:flex;
+  gap:12px;
+  flex-wrap:wrap;
+  justify-content:center;
+  align-items:flex-end;
+  padding:20px 10px;
+}
 
 .card{
-  min-width:140px;max-width:160px;padding:12px;border-radius:12px;background:var(--card);
-  box-shadow:0 4px 12px rgba(0,0,0,0.6);cursor:pointer;
-  border:2px solid rgba(255,255,255,0.1);
-  transition:all 0.3s cubic-bezier(0.4,0,0.2,1);
-  position:relative;overflow:hidden
+  min-width:160px;
+  max-width:180px;
+  height:240px;
+  padding:16px;
+  border-radius:16px;
+  background:linear-gradient(145deg, #1a2b3f 0%, #0f1b2a 100%);
+  box-shadow:0 8px 16px rgba(0,0,0,0.7), inset 0 1px 2px rgba(255,255,255,0.1);
+  cursor:pointer;
+  border:3px solid rgba(255,255,255,0.15);
+  transition:all 0.4s cubic-bezier(0.4,0,0.2,1);
+  position:relative;
+  overflow:visible;
+  transform-origin:bottom center;
+  display:flex;
+  flex-direction:column;
+  justify-content:space-between;
 }
+
 .card::before{
-  content:'';position:absolute;top:0;left:0;right:0;bottom:0;
-  background:linear-gradient(135deg,rgba(255,255,255,0.1) 0%,transparent 50%);
-  opacity:0;transition:opacity 0.3s ease
+  content:'';
+  position:absolute;
+  top:-2px;left:-2px;right:-2px;bottom:-2px;
+  background:linear-gradient(135deg,rgba(255,255,255,0.15) 0%,transparent 50%);
+  opacity:0;
+  transition:opacity 0.4s ease;
+  border-radius:16px;
+  z-index:-1;
 }
+
 .card:hover{
-  transform:translateY(-8px) scale(1.05);
-  box-shadow:0 12px 24px rgba(0,0,0,0.8),0 0 20px rgba(255,204,51,0.3);
-  border-color:rgba(255,204,51,0.6)
+  transform:translateY(-40px) scale(1.15) rotateX(5deg);
+  box-shadow:0 20px 40px rgba(0,0,0,0.9),0 0 40px rgba(255,204,51,0.5);
+  border-color:rgba(255,204,51,0.8);
+  z-index:100;
 }
+
 .card:hover::before{opacity:1}
-.card.common{border-color:rgba(155,155,155,0.4)}
+
+.card:hover::after{
+  content:attr(data-description);
+  position:absolute;
+  top:110%;
+  left:50%;
+  transform:translateX(-50%);
+  background:rgba(0,0,0,0.95);
+  border:2px solid var(--accent);
+  border-radius:12px;
+  padding:16px;
+  min-width:220px;
+  max-width:300px;
+  font-size:0.9rem;
+  line-height:1.5;
+  color:#e6eef8;
+  box-shadow:0 8px 24px rgba(0,0,0,0.8);
+  z-index:1000;
+  pointer-events:none;
+  white-space:normal;
+}
+
+.card.common{border-color:rgba(155,155,155,0.5)}
+.card.common:hover{
+  box-shadow:0 20px 40px rgba(0,0,0,0.9),0 0 40px rgba(155,155,155,0.4);
+  border-color:rgba(155,155,155,0.9);
+}
+
 .card.uncommon{border-color:rgba(82,196,26,0.6)}
+.card.uncommon:hover{
+  box-shadow:0 20px 40px rgba(0,0,0,0.9),0 0 40px rgba(82,196,26,0.5);
+  border-color:rgba(82,196,26,1);
+}
+
 .card.rare{border-color:rgba(24,144,255,0.7)}
+.card.rare:hover{
+  box-shadow:0 20px 40px rgba(0,0,0,0.9),0 0 40px rgba(24,144,255,0.6);
+  border-color:rgba(24,144,255,1);
+}
+
 .card.legendary{
   border-color:rgba(255,165,0,0.9);
-  background:linear-gradient(135deg,#102033 0%,#1a2540 50%,#1f2d4a 100%);
-  box-shadow:0 4px 12px rgba(0,0,0,0.6),0 0 15px rgba(255,165,0,0.3)
+  background:linear-gradient(145deg,#2a1a0f 0%,#1f150a 50%,#1a1008 100%);
+  box-shadow:0 8px 16px rgba(0,0,0,0.7),0 0 20px rgba(255,165,0,0.4);
 }
+
 .card.legendary:hover{
-  box-shadow:0 12px 24px rgba(0,0,0,0.8),0 0 30px rgba(255,165,0,0.6);
-  border-color:rgba(255,165,0,1)
+  box-shadow:0 20px 40px rgba(0,0,0,0.9),0 0 50px rgba(255,165,0,0.8);
+  border-color:rgba(255,165,0,1);
 }
+
 #cardRewards,#shopCards{display:flex;gap:16px;flex-wrap:wrap;margin:12px 0;justify-content:center}
-.card .title{font-weight:700;color:#ffffff;font-size:1.05rem;text-shadow:0 1px 2px rgba(0,0,0,0.5)}
+.card .title{
+  font-weight:700;
+  color:#ffffff;
+  font-size:1.15rem;
+  text-shadow:0 2px 4px rgba(0,0,0,0.7);
+  margin-bottom:8px;
+}
 .card .cost{
   float:right;background:linear-gradient(135deg,#0b2a44,#1a3a5a);
   padding:4px 8px;border-radius:50%;font-weight:700;font-size:1.1rem;
