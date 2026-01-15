@@ -169,9 +169,30 @@ function createCardWithEffect(template, game) {
       };
       break;
     default:
+      console.warn(`Unknown card ID: ${template.id}`);
       playFn = (g,owner) => g.log(`Played ${template.name}.`);
   }
   return makeCard(template.id, template.name, template.cost, template.desc, playFn, template.rarity);
+}
+
+/* Select a random card pool based on rarity probabilities */
+function selectRandomRarityPool(legendaryChance = 0.03, rareChance = 0.15, uncommonChance = 0.5) {
+  const roll = Math.random();
+  if(roll > (1 - legendaryChance)) return CARD_POOL.legendary;
+  if(roll > (1 - legendaryChance - rareChance)) return CARD_POOL.rare;
+  if(roll > (1 - legendaryChance - rareChance - uncommonChance)) return CARD_POOL.uncommon;
+  return CARD_POOL.common;
+}
+
+/* Get price for a card based on its rarity */
+function getCardPrice(rarity) {
+  switch(rarity) {
+    case 'legendary': return 120 + rand(41);
+    case 'rare': return 75 + rand(26);
+    case 'uncommon': return 40 + rand(21);
+    case 'common': return 25 + rand(16);
+    default: return 50;
+  }
 }
 
 /* Game State */
@@ -446,13 +467,7 @@ class Game {
     // Generate 3 random cards to choose from
     const rewards = [];
     for(let i=0; i<3; i++){
-      const rarity = Math.random();
-      let pool;
-      if(rarity > 0.97) pool = CARD_POOL.legendary;
-      else if(rarity > 0.85) pool = CARD_POOL.rare;
-      else if(rarity > 0.5) pool = CARD_POOL.uncommon;
-      else pool = CARD_POOL.common;
-      
+      const pool = selectRandomRarityPool();
       const template = pool[rand(pool.length)];
       rewards.push(template);
     }
@@ -500,23 +515,9 @@ class Game {
     // Generate shop inventory
     const shopItems = [];
     for(let i=0; i<6; i++){
-      const rarity = Math.random();
-      let pool, price;
-      if(rarity > 0.95) {
-        pool = CARD_POOL.legendary;
-        price = 120 + rand(41);
-      } else if(rarity > 0.85) {
-        pool = CARD_POOL.rare;
-        price = 75 + rand(26);
-      } else if(rarity > 0.5) {
-        pool = CARD_POOL.uncommon;
-        price = 40 + rand(21);
-      } else {
-        pool = CARD_POOL.common;
-        price = 25 + rand(16);
-      }
-      
+      const pool = selectRandomRarityPool(0.05, 0.15, 0.5); // Slightly higher legendary chance in shop
       const template = pool[rand(pool.length)];
+      const price = getCardPrice(template.rarity);
       shopItems.push({...template, price});
     }
     
