@@ -13,8 +13,8 @@ header{display:flex;justify-content:space-between;align-items:center;padding:12p
 h1{margin:0;font-size:1.1rem}
 #meta{display:flex;gap:12px;color:var(--muted);font-size:0.95rem}
 
-main{display:grid;grid-template-columns:320px 1fr;gap:16px;padding:18px}
-#dungeon, #combat, #logArea, #reward, #shop, #mapView{background:var(--panel);padding:12px;border-radius:8px;min-height:140px}
+main{display:grid;grid-template-columns:320px 1fr 280px;gap:16px;padding:18px}
+#dungeon, #combat, #logArea, #reward, #shop, #mapView, #inventoryArea{background:var(--panel);padding:12px;border-radius:8px;min-height:140px}
 #mapView{grid-column:1 / -1;min-height:620px}
 #mapContainer{display:flex;justify-content:center;align-items:center;margin-top:12px}
 #mapSvg{background:rgba(0,0,0,0.2);border-radius:8px}
@@ -98,6 +98,59 @@ main{display:grid;grid-template-columns:320px 1fr;gap:16px;padding:18px}
 #endStats{margin:20px 0;color:var(--muted);font-size:1.1rem;line-height:1.6}
 #endStats div{margin:8px 0}
 footer{padding:12px 18px;color:var(--muted);font-size:0.85rem}
+
+/* Inventory Styles */
+#inventoryArea{grid-row:1 / 3}
+#equipmentSlots{display:flex;flex-direction:column;gap:12px}
+.equipment-slot{background:rgba(0,0,0,0.2);padding:10px;border-radius:8px;border:2px solid rgba(255,255,255,0.1)}
+.slot-label{font-size:0.85rem;color:var(--accent);font-weight:700;margin-bottom:6px;text-transform:uppercase}
+.slot-content{
+  min-height:60px;padding:8px;border-radius:6px;background:var(--card);
+  border:2px dashed rgba(255,255,255,0.15);
+  display:flex;flex-direction:column;gap:4px;
+  transition:all 0.3s ease
+}
+.slot-content.empty{
+  color:var(--muted);font-size:0.85rem;opacity:0.5;
+  align-items:center;justify-content:center
+}
+.slot-content.has-item{
+  border-style:solid;cursor:pointer
+}
+.slot-content.has-item:hover{
+  transform:translateY(-2px);
+  box-shadow:0 4px 12px rgba(0,0,0,0.4);
+  border-color:rgba(255,204,51,0.4)
+}
+.item-name{font-weight:700;font-size:0.95rem}
+.item-stats{font-size:0.8rem;color:var(--muted);line-height:1.4}
+.item-rarity{font-size:0.75rem;text-transform:uppercase;letter-spacing:0.5px}
+.item-rarity.common{color:#9b9b9b}
+.item-rarity.uncommon{color:#52c41a}
+.item-rarity.rare{color:#1890ff}
+.item-rarity.legendary{color:#ffa500}
+#bonusStats{margin-top:16px;padding:10px;background:rgba(58,210,159,0.1);border-radius:6px;border:1px solid rgba(58,210,159,0.3)}
+.bonus-label{font-size:0.85rem;color:var(--hp-green);font-weight:700;margin-bottom:6px}
+#bonusDisplay{font-size:0.9rem;color:#e6eef8;line-height:1.6}
+#lootItems{display:flex;flex-direction:column;gap:12px;margin:16px 0;max-height:400px;overflow-y:auto}
+.loot-item{
+  background:var(--card);padding:12px;border-radius:8px;
+  border:2px solid rgba(255,255,255,0.1);cursor:pointer;
+  transition:all 0.3s ease
+}
+.loot-item:hover{
+  transform:translateX(4px);
+  border-color:rgba(255,204,51,0.6);
+  box-shadow:0 4px 12px rgba(0,0,0,0.4)
+}
+.loot-item.common{border-color:rgba(155,155,155,0.4)}
+.loot-item.uncommon{border-color:rgba(82,196,26,0.6)}
+.loot-item.rare{border-color:rgba(24,144,255,0.7)}
+.loot-item.legendary{
+  border-color:rgba(255,165,0,0.9);
+  box-shadow:0 0 15px rgba(255,165,0,0.3)
+}
+
 @media(max-width:900px){
   main{grid-template-columns:1fr;padding:12px}
 }

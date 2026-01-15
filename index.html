@@ -79,7 +79,37 @@
       <h3>Log</h3>
       <div id="log"></div>
     </section>
+
+    <section id="inventoryArea">
+      <h3>Inventory</h3>
+      <div id="equipmentSlots">
+        <div class="equipment-slot" data-slot="weapon">
+          <div class="slot-label">Weapon</div>
+          <div id="weaponSlot" class="slot-content empty">Empty</div>
+        </div>
+        <div class="equipment-slot" data-slot="armor">
+          <div class="slot-label">Armor</div>
+          <div id="armorSlot" class="slot-content empty">Empty</div>
+        </div>
+        <div class="equipment-slot" data-slot="accessory">
+          <div class="slot-label">Accessory</div>
+          <div id="accessorySlot" class="slot-content empty">Empty</div>
+        </div>
+      </div>
+      <div id="bonusStats" class="hidden">
+        <div class="bonus-label">Equipment Bonuses:</div>
+        <div id="bonusDisplay"></div>
+      </div>
+    </section>
   </main>
+
+  <div id="lootModal" class="modal hidden">
+    <div class="modal-content">
+      <h2>Loot Dropped!</h2>
+      <div id="lootItems"></div>
+      <button id="closeLootBtn" class="primary">Continue</button>
+    </div>
+  </div>
 
   <div id="gameOver" class="modal hidden">
     <div class="modal-content">

@@ -11,6 +11,121 @@ function makeCard(id, name, cost, desc, playFn, rarity='common'){
   return { id, name, cost, desc, play: playFn, rarity };
 }
 
+/* Item/Equipment definitions for Diablo-style inventory system */
+const ITEM_POOL = {
+  weapon: {
+    common: [
+      {id:'rusty_sword', name:'Rusty Sword', type:'weapon', rarity:'common', stats:{attack:2}},
+      {id:'wooden_club', name:'Wooden Club', type:'weapon', rarity:'common', stats:{attack:3}},
+      {id:'iron_dagger', name:'Iron Dagger', type:'weapon', rarity:'common', stats:{attack:2, draw:1}},
+    ],
+    uncommon: [
+      {id:'steel_sword', name:'Steel Sword', type:'weapon', rarity:'uncommon', stats:{attack:5}},
+      {id:'war_axe', name:'War Axe', type:'weapon', rarity:'uncommon', stats:{attack:6, hp:-5}},
+      {id:'enchanted_blade', name:'Enchanted Blade', type:'weapon', rarity:'uncommon', stats:{attack:4, energy:1}},
+    ],
+    rare: [
+      {id:'flaming_sword', name:'Flaming Sword', type:'weapon', rarity:'rare', stats:{attack:8, hp:5}},
+      {id:'vorpal_blade', name:'Vorpal Blade', type:'weapon', rarity:'rare', stats:{attack:10}},
+      {id:'lightning_spear', name:'Lightning Spear', type:'weapon', rarity:'rare', stats:{attack:7, draw:1}},
+    ],
+    legendary: [
+      {id:'excalibur', name:'Excalibur', type:'weapon', rarity:'legendary', stats:{attack:15, hp:10}},
+      {id:'doombringer', name:'Doombringer', type:'weapon', rarity:'legendary', stats:{attack:18, energy:1}},
+    ]
+  },
+  armor: {
+    common: [
+      {id:'leather_armor', name:'Leather Armor', type:'armor', rarity:'common', stats:{hp:8}},
+      {id:'chainmail', name:'Chainmail', type:'armor', rarity:'common', stats:{hp:10, energy:-1}},
+      {id:'cloth_robe', name:'Cloth Robe', type:'armor', rarity:'common', stats:{hp:5, draw:1}},
+    ],
+    uncommon: [
+      {id:'steel_plate', name:'Steel Plate', type:'armor', rarity:'uncommon', stats:{hp:15}},
+      {id:'mithril_vest', name:'Mithril Vest', type:'armor', rarity:'uncommon', stats:{hp:12, attack:2}},
+      {id:'scale_mail', name:'Scale Mail', type:'armor', rarity:'uncommon', stats:{hp:14, draw:1}},
+    ],
+    rare: [
+      {id:'dragon_scale', name:'Dragon Scale Armor', type:'armor', rarity:'rare', stats:{hp:20, attack:3}},
+      {id:'holy_armor', name:'Holy Armor', type:'armor', rarity:'rare', stats:{hp:18, energy:1}},
+      {id:'shadow_cloak', name:'Shadow Cloak', type:'armor', rarity:'rare', stats:{hp:12, draw:2}},
+    ],
+    legendary: [
+      {id:'titans_plate', name:"Titan's Plate", type:'armor', rarity:'legendary', stats:{hp:30, attack:5}},
+      {id:'archmage_robe', name:'Archmage Robe', type:'armor', rarity:'legendary', stats:{hp:20, energy:2, draw:2}},
+    ]
+  },
+  accessory: {
+    common: [
+      {id:'health_ring', name:'Health Ring', type:'accessory', rarity:'common', stats:{hp:5}},
+      {id:'power_amulet', name:'Power Amulet', type:'accessory', rarity:'common', stats:{attack:2}},
+      {id:'energy_charm', name:'Energy Charm', type:'accessory', rarity:'common', stats:{energy:1}},
+    ],
+    uncommon: [
+      {id:'vampiric_ring', name:'Vampiric Ring', type:'accessory', rarity:'uncommon', stats:{attack:3, hp:5}},
+      {id:'sages_pendant', name:"Sage's Pendant", type:'accessory', rarity:'uncommon', stats:{draw:2, energy:1}},
+      {id:'berserker_belt', name:'Berserker Belt', type:'accessory', rarity:'uncommon', stats:{attack:5, hp:-5}},
+    ],
+    rare: [
+      {id:'phoenix_feather', name:'Phoenix Feather', type:'accessory', rarity:'rare', stats:{hp:15, draw:1}},
+      {id:'warlords_signet', name:"Warlord's Signet", type:'accessory', rarity:'rare', stats:{attack:6, energy:1}},
+      {id:'arcane_orb', name:'Arcane Orb', type:'accessory', rarity:'rare', stats:{energy:2, draw:2}},
+    ],
+    legendary: [
+      {id:'infinity_stone', name:'Infinity Stone', type:'accessory', rarity:'legendary', stats:{attack:8, hp:15, energy:2}},
+      {id:'ring_of_gods', name:'Ring of Gods', type:'accessory', rarity:'legendary', stats:{attack:10, hp:20, draw:2}},
+    ]
+  }
+};
+
+/* Get loot drops based on enemy/event type and rarity */
+function generateLoot(sourceType, rarityBonus = 0) {
+  const loot = [];
+  let dropChance = 0.5; // Base 50% drop chance
+  let itemCount = 1;
+  
+  // Adjust drop rates based on source
+  if(sourceType === 'boss') {
+    dropChance = 1.0; // Bosses always drop
+    itemCount = 2 + rand(2); // 2-3 items
+    rarityBonus += 0.25;
+  } else if(sourceType === 'elite') {
+    dropChance = 0.8; // 80% drop chance
+    itemCount = 1 + rand(2); // 1-2 items
+    rarityBonus += 0.15;
+  } else if(sourceType === 'treasure') {
+    dropChance = 1.0;
+    itemCount = 1 + rand(2);
+    rarityBonus += 0.1;
+  }
+  
+  // Roll for drops
+  for(let i = 0; i < itemCount; i++) {
+    if(Math.random() > dropChance) continue;
+    
+    // Select item type
+    const types = ['weapon', 'armor', 'accessory'];
+    const itemType = types[rand(types.length)];
+    
+    // Select rarity with bonus
+    const rarityRoll = Math.random() + rarityBonus;
+    let rarity;
+    if(rarityRoll > 0.97) rarity = 'legendary';
+    else if(rarityRoll > 0.85) rarity = 'rare';
+    else if(rarityRoll > 0.60) rarity = 'uncommon';
+    else rarity = 'common';
+    
+    // Get item from pool
+    const pool = ITEM_POOL[itemType][rarity];
+    if(pool && pool.length > 0) {
+      const item = {...pool[rand(pool.length)]};
+      loot.push(item);
+    }
+  }
+  
+  return loot;
+}
+
 /* Card pool for rewards and shop */
 const CARD_POOL = {
   common: [
@@ -65,7 +180,8 @@ function createCardWithEffect(template, game) {
       else if(template.id === 'quickStrike') atkDmg = 3;
       else if(template.id === 'cleave') atkDmg = 8;
       playFn = (g,owner,target) => {
-        const actual = target.takeDamage(atkDmg);
+        const bonus = owner.baseAttack || 0;
+        const actual = target.takeDamage(atkDmg + bonus);
         g.log(`${owner.name} deals ${actual} damage to ${target.name}.`);
       };
       break;
@@ -78,7 +194,8 @@ function createCardWithEffect(template, game) {
       break;
     case 'heavy':
       playFn = (g,owner,target) => {
-        const actual = target.takeDamage(12);
+        const bonus = owner.baseAttack || 0;
+        const actual = target.takeDamage(12 + bonus);
         g.log(`${owner.name} deals ${actual} heavy damage to ${target.name}.`);
       };
       break;
@@ -90,13 +207,15 @@ function createCardWithEffect(template, game) {
       break;
     case 'bash':
       playFn = (g,owner,target) => {
-        const actual = target.takeDamage(16);
+        const bonus = owner.baseAttack || 0;
+        const actual = target.takeDamage(16 + bonus);
         g.log(`${owner.name} bashes for ${actual} damage!`);
       };
       break;
     case 'powerStrike':
       playFn = (g,owner,target) => {
-        const actual = target.takeDamage(15);
+        const bonus = owner.baseAttack || 0;
+        const actual = target.takeDamage(15 + bonus);
         g.log(`${owner.name} power strikes for ${actual} damage!`);
       };
       break;
@@ -108,7 +227,8 @@ function createCardWithEffect(template, game) {
       break;
     case 'rampage':
       playFn = (g,owner,target) => {
-        const actual = target.takeDamage(20);
+        const bonus = owner.baseAttack || 0;
+        const actual = target.takeDamage(20 + bonus);
         g.log(`${owner.name} rampages for ${actual} massive damage!`);
       };
       break;
@@ -120,14 +240,16 @@ function createCardWithEffect(template, game) {
       break;
     case 'reaper':
       playFn = (g,owner,target) => {
-        const actual = target.takeDamage(8);
+        const bonus = owner.baseAttack || 0;
+        const actual = target.takeDamage(8 + bonus);
         owner.heal(actual);
         g.log(`${owner.name} reaps ${actual} damage and heals for ${actual}!`);
       };
       break;
     case 'execute':
       playFn = (g,owner,target) => {
-        const actual = target.takeDamage(18);
+        const bonus = owner.baseAttack || 0;
+        const actual = target.takeDamage(18 + bonus);
         g.log(`${owner.name} executes for ${actual} damage!`);
       };
       break;
@@ -161,7 +283,8 @@ function createCardWithEffect(template, game) {
       break;
     case 'omnislash':
       playFn = (g,owner,target) => {
-        const actual = target.takeDamage(25);
+        const bonus = owner.baseAttack || 0;
+        const actual = target.takeDamage(25 + bonus);
         g.log(`${owner.name} omnislashes for ${actual} devastating damage!`);
       };
       break;
@@ -173,7 +296,8 @@ function createCardWithEffect(template, game) {
       break;
     case 'phoenix':
       playFn = (g,owner,target) => {
-        const actual = target.takeDamage(10);
+        const bonus = owner.baseAttack || 0;
+        const actual = target.takeDamage(10 + bonus);
         owner.heal(10);
         g.log(`${owner.name} channels phoenix power: ${actual} damage and 10 HP healed!`);
       };
@@ -267,6 +391,11 @@ class Game {
     this.currentNode = null;
     this.mapNodes = [];
     this.gold = 0;
+    this.inventory = {
+      weapon: null,
+      armor: null,
+      accessory: null
+    };
     this.startTime = Date.now();
     this.roomsCleared = 0;
     this.enemiesDefeated = 0;
@@ -284,11 +413,16 @@ class Game {
     $("skipReward").addEventListener('click', ()=> this.skipReward());
     $("leaveShop").addEventListener('click', ()=> this.leaveShop());
     $("restartBtn").addEventListener('click', ()=> this.restart());
+    $("closeLootBtn").addEventListener('click', ()=> this.closeLootModal());
+    this.updateInventoryUI();
   }
 
   resetPlayer(){
     this.player = new Entity("You", 50, 50);
     this.player.energy = 3;
+    this.player.maxEnergy = 3;
+    this.player.baseAttack = 0;
+    this.player.bonusDraw = 0;
   }
 
   makeDeck(){
@@ -538,8 +672,15 @@ class Game {
   }
 
   enterTreasure(){
-    // Show shop with cards for purchase
-    this.showShop();
+    // Drop treasure loot
+    const treasureLoot = generateLoot('treasure');
+    if(treasureLoot.length > 0) {
+      this.log(`Found ${treasureLoot.length} treasure item(s)!`);
+      this.showLootDrop(treasureLoot);
+    } else {
+      // Fallback to shop if no items dropped
+      this.showShop();
+    }
   }
 
   startCombat(type){
@@ -589,7 +730,7 @@ class Game {
     this.log(`Encountered ${this.enemy.name} (HP ${this.enemy.hp}, ATK ${this.enemy.atk})`);
     // reset block/energy and draw
     this.player.block = 0;
-    this.player.energy = 3;
+    this.player.energy = this.player.maxEnergy || 3;
     this.deck.discardHand(); // discard any leftover hand at new combat start
     // draw initial hand
     this.drawToFull();
@@ -597,8 +738,8 @@ class Game {
   }
 
   drawToFull(){
-    // hand size 5
-    const handSize = 5;
+    // hand size 5 + bonus draw from equipment
+    const handSize = 5 + (this.player.bonusDraw || 0);
     while(this.deck.hand.length < handSize){
       this.deck.draw(1);
     }
@@ -649,7 +790,7 @@ class Game {
     this.enemyTurn();
     // refresh energy and draw a new hand
     if(this.enemy && this.enemy.hp > 0){
-      this.player.energy = 3;
+      this.player.energy = this.player.maxEnergy || 3;
       // discard hand after turn
       this.deck.discard.push(...this.deck.hand);
       this.deck.hand = [];
@@ -666,10 +807,28 @@ class Game {
       this.roomsCleared++;
       this.enemiesDefeated++;
       
+      // Generate item drops based on enemy type
+      const enemyType = this.currentNode ? this.currentNode.type : 'combat';
+      const droppedItems = generateLoot(enemyType);
+      
       // Check if boss was defeated
       if(this.currentNode && this.currentNode.type === 'boss'){
         this.showVictory();
         return;
+      }
+      
+      // Show loot drops if any
+      if(droppedItems.length > 0) {
+        this.log(`${droppedItems.length} item(s) dropped!`);
+        // Clean up combat first
+        this.enemy = null;
+        $("combat").classList.add('hidden');
+        this.deck.discard.push(...this.deck.hand);
+        this.deck.hand = [];
+        updateUI();
+        // Show loot modal
+        this.showLootDrop(droppedItems);
+        return; // Don't proceed to card rewards yet
       }
       
       // Show card rewards
@@ -830,6 +989,168 @@ class Game {
 
   restart(){
     location.reload();
+  }
+
+  /* Inventory Management */
+  equipItem(item) {
+    const slot = item.type;
+    const oldItem = this.inventory[slot];
+    
+    // Unequip old item if exists
+    if(oldItem) {
+      this.unapplyItemStats(oldItem);
+    }
+    
+    // Equip new item
+    this.inventory[slot] = item;
+    this.applyItemStats(item);
+    this.log(`Equipped ${item.name}!`);
+    this.updateInventoryUI();
+    updateUI();
+  }
+
+  applyItemStats(item) {
+    if(!item || !item.stats) return;
+    
+    const stats = item.stats;
+    if(stats.hp) {
+      this.player.maxHp += stats.hp;
+      this.player.hp = Math.min(this.player.hp + stats.hp, this.player.maxHp);
+    }
+    if(stats.attack) {
+      this.player.baseAttack = (this.player.baseAttack || 0) + stats.attack;
+    }
+    if(stats.energy) {
+      this.player.maxEnergy = (this.player.maxEnergy || 3) + stats.energy;
+    }
+    if(stats.draw) {
+      this.player.bonusDraw = (this.player.bonusDraw || 0) + stats.draw;
+    }
+  }
+
+  unapplyItemStats(item) {
+    if(!item || !item.stats) return;
+    
+    const stats = item.stats;
+    if(stats.hp) {
+      this.player.maxHp -= stats.hp;
+      this.player.hp = Math.min(this.player.hp, this.player.maxHp);
+    }
+    if(stats.attack) {
+      this.player.baseAttack = (this.player.baseAttack || 0) - stats.attack;
+    }
+    if(stats.energy) {
+      this.player.maxEnergy = (this.player.maxEnergy || 3) - stats.energy;
+    }
+    if(stats.draw) {
+      this.player.bonusDraw = (this.player.bonusDraw || 0) - stats.draw;
+    }
+  }
+
+  updateInventoryUI() {
+    // Update equipment slots
+    ['weapon', 'armor', 'accessory'].forEach(slot => {
+      const slotEl = $(slot + 'Slot');
+      const item = this.inventory[slot];
+      
+      if(item) {
+        slotEl.className = 'slot-content has-item';
+        slotEl.innerHTML = `
+          <div class="item-name">${item.name}</div>
+          <div class="item-stats">${this.formatItemStats(item.stats)}</div>
+          <div class="item-rarity ${item.rarity}">${item.rarity}</div>
+        `;
+        slotEl.addEventListener('click', () => this.unequipItem(slot));
+      } else {
+        slotEl.className = 'slot-content empty';
+        slotEl.innerHTML = 'Empty';
+        slotEl.onclick = null;
+      }
+    });
+    
+    // Update bonus stats display
+    const hasAnyEquipment = Object.values(this.inventory).some(item => item !== null);
+    const bonusStatsEl = $("bonusStats");
+    
+    if(hasAnyEquipment) {
+      bonusStatsEl.classList.remove('hidden');
+      const totalStats = this.getTotalEquipmentStats();
+      $("bonusDisplay").innerHTML = this.formatItemStats(totalStats);
+    } else {
+      bonusStatsEl.classList.add('hidden');
+    }
+  }
+
+  getTotalEquipmentStats() {
+    const total = {attack: 0, hp: 0, energy: 0, draw: 0};
+    
+    Object.values(this.inventory).forEach(item => {
+      if(item && item.stats) {
+        if(item.stats.attack) total.attack += item.stats.attack;
+        if(item.stats.hp) total.hp += item.stats.hp;
+        if(item.stats.energy) total.energy += item.stats.energy;
+        if(item.stats.draw) total.draw += item.stats.draw;
+      }
+    });
+    
+    return total;
+  }
+
+  formatItemStats(stats) {
+    const parts = [];
+    if(stats.attack) parts.push(`+${stats.attack} ATK`);
+    if(stats.hp) parts.push(`${stats.hp > 0 ? '+' : ''}${stats.hp} HP`);
+    if(stats.energy) parts.push(`${stats.energy > 0 ? '+' : ''}${stats.energy} Energy`);
+    if(stats.draw) parts.push(`+${stats.draw} Draw`);
+    return parts.join(', ');
+  }
+
+  unequipItem(slot) {
+    const item = this.inventory[slot];
+    if(!item) return;
+    
+    this.unapplyItemStats(item);
+    this.inventory[slot] = null;
+    this.log(`Unequipped ${item.name}.`);
+    this.updateInventoryUI();
+    updateUI();
+  }
+
+  showLootDrop(lootItems) {
+    if(!lootItems || lootItems.length === 0) return;
+    
+    $("lootModal").classList.remove('hidden');
+    const lootEl = $("lootItems");
+    lootEl.innerHTML = '';
+    
+    lootItems.forEach(item => {
+      const div = document.createElement('div');
+      div.className = `loot-item ${item.rarity}`;
+      div.innerHTML = `
+        <div class="item-name">${item.name}</div>
+        <div class="item-stats">${this.formatItemStats(item.stats)}</div>
+        <div class="item-rarity ${item.rarity}">${item.rarity}</div>
+      `;
+      div.addEventListener('click', () => {
+        this.equipItem(item);
+        div.style.opacity = '0.5';
+        div.style.pointerEvents = 'none';
+        div.innerHTML += '<div style="margin-top:8px;color:#3ad29f;font-weight:700">✓ Equipped</div>';
+      });
+      lootEl.appendChild(div);
+    });
+  }
+
+  closeLootModal() {
+    $("lootModal").classList.add('hidden');
+    
+    // If we're coming from combat (not treasure), show card rewards
+    if(this.enemy === null && this.currentNode && this.currentNode.type !== 'treasure') {
+      this.showCardRewards();
+    } else {
+      // Otherwise return to map
+      this.showMap();
+    }
   }
 }
 
