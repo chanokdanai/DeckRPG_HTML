@@ -142,6 +142,48 @@ const ITEM_POOL = {
       {id:'infinity_stone', name:'Infinity Stone', type:'necklace', rarity:'legendary', stats:{attack:8, hp:15, energy:2}},
       {id:'eye_of_gods', name:'Eye of Gods', type:'necklace', rarity:'legendary', stats:{attack:10, hp:20, draw:3, energy:2}},
     ]
+  },
+  helmet: {
+    common: [
+      {id:'leather_cap', name:'Leather Cap', type:'helmet', rarity:'common', stats:{hp:5}},
+      {id:'iron_helmet', name:'Iron Helmet', type:'helmet', rarity:'common', stats:{hp:6, energy:-1}},
+      {id:'cloth_hood', name:'Cloth Hood', type:'helmet', rarity:'common', stats:{draw:1}},
+    ],
+    uncommon: [
+      {id:'steel_helm', name:'Steel Helm', type:'helmet', rarity:'uncommon', stats:{hp:10}},
+      {id:'mage_hat', name:'Mage Hat', type:'helmet', rarity:'uncommon', stats:{energy:1, draw:1}},
+      {id:'warriors_helm', name:"Warrior's Helm", type:'helmet', rarity:'uncommon', stats:{hp:8, attack:2}},
+    ],
+    rare: [
+      {id:'dragon_helm', name:'Dragon Helm', type:'helmet', rarity:'rare', stats:{hp:12, attack:3}},
+      {id:'crown_of_wisdom', name:'Crown of Wisdom', type:'helmet', rarity:'rare', stats:{energy:2, draw:2}},
+      {id:'blessed_crown', name:'Blessed Crown', type:'helmet', rarity:'rare', stats:{hp:10, energy:1, draw:1}},
+    ],
+    legendary: [
+      {id:'helm_of_gods', name:'Helm of Gods', type:'helmet', rarity:'legendary', stats:{hp:15, attack:5, energy:1}},
+      {id:'infinity_crown', name:'Infinity Crown', type:'helmet', rarity:'legendary', stats:{hp:12, energy:3, draw:3}},
+    ]
+  },
+  belt: {
+    common: [
+      {id:'leather_belt', name:'Leather Belt', type:'belt', rarity:'common', stats:{hp:4}},
+      {id:'utility_belt', name:'Utility Belt', type:'belt', rarity:'common', stats:{draw:1}},
+      {id:'simple_sash', name:'Simple Sash', type:'belt', rarity:'common', stats:{energy:1}},
+    ],
+    uncommon: [
+      {id:'reinforced_belt', name:'Reinforced Belt', type:'belt', rarity:'uncommon', stats:{hp:8, attack:1}},
+      {id:'mages_sash', name:"Mage's Sash", type:'belt', rarity:'uncommon', stats:{energy:1, draw:1}},
+      {id:'warriors_belt', name:"Warrior's Belt", type:'belt', rarity:'uncommon', stats:{attack:3, hp:5}},
+    ],
+    rare: [
+      {id:'dragon_belt', name:'Dragon Belt', type:'belt', rarity:'rare', stats:{hp:10, attack:3}},
+      {id:'arcane_sash', name:'Arcane Sash', type:'belt', rarity:'rare', stats:{energy:2, draw:1}},
+      {id:'titans_belt', name:"Titan's Belt", type:'belt', rarity:'rare', stats:{hp:12, attack:4}},
+    ],
+    legendary: [
+      {id:'belt_of_gods', name:'Belt of Gods', type:'belt', rarity:'legendary', stats:{hp:15, attack:5, energy:2}},
+      {id:'eternity_sash', name:'Eternity Sash', type:'belt', rarity:'legendary', stats:{hp:10, energy:2, draw:3}},
+    ]
   }
 };
 
@@ -172,7 +214,7 @@ function generateLoot(sourceType, rarityBonus = 0) {
     if(Math.random() > dropChance) continue;
     
     // Select item type
-    const types = ['weapon', 'armor', 'boots', 'gloves', 'ring', 'necklace'];
+    const types = ['weapon', 'armor', 'boots', 'gloves', 'ring', 'necklace', 'helmet', 'belt'];
     const itemType = types[rand(types.length)];
     
     // Select rarity with bonus
@@ -460,14 +502,16 @@ class Game {
     this.mapNodes = [];
     this.gold = 0;
     this.inventory = {
+      helmet: null,
       leftHand: null,
       rightHand: null,
+      necklace: null,
       armor: null,
-      boots: null,
-      gloves: null,
       ring1: null,
       ring2: null,
-      necklace: null
+      gloves: null,
+      belt: null,
+      boots: null
     };
     this.startTime = Date.now();
     this.roomsCleared = 0;
@@ -1174,26 +1218,45 @@ class Game {
   }
 
   updateInventoryUI() {
-    // Update equipment slots
-    ['leftHand', 'rightHand', 'armor', 'boots', 'gloves', 'ring1', 'ring2', 'necklace'].forEach(slot => {
+    const slots = ['helmet', 'leftHand', 'necklace', 'rightHand', 'armor', 'ring1', 'ring2', 'gloves', 'belt', 'boots'];
+    
+    slots.forEach(slot => {
       const slotEl = $(slot + 'Slot');
       const item = this.inventory[slot];
       
-      // Clear existing content and event listeners by replacing innerHTML
       if(item) {
-        slotEl.className = 'slot-content has-item';
+        slotEl.className = `inv-slot ${item.rarity}`;
         slotEl.innerHTML = `
-          <div class="item-name">${item.name}</div>
-          <div class="item-stats">${this.formatItemStats(item.stats)}</div>
-          <div class="item-rarity ${item.rarity}">${item.rarity}</div>
+          <div class="item-icon">
+            <div class="item-icon-image">${this.getItemEmoji(item.type)}</div>
+            <div class="item-icon-name">${item.name}</div>
+          </div>
+          <div class="item-rarity-border"></div>
         `;
-        // Use onclick to avoid listener accumulation
+        slotEl.draggable = true;
+        slotEl.ondragstart = (e) => this.handleDragStart(e, slot);
         slotEl.onclick = () => this.unequipItem(slot);
+        
+        // Tooltip on hover
+        slotEl.onmouseenter = (e) => this.showItemTooltip(e, item);
+        slotEl.onmouseleave = () => this.hideItemTooltip();
       } else {
-        slotEl.className = 'slot-content empty';
-        slotEl.innerHTML = 'Empty';
+        slotEl.className = 'inv-slot empty';
+        slotEl.innerHTML = `<div class="slot-icon">${this.getSlotEmoji(slot)}</div>`;
+        slotEl.draggable = false;
         slotEl.onclick = null;
+        slotEl.onmouseenter = null;
+        slotEl.onmouseleave = null;
       }
+      
+      // Allow dropping on all slots
+      slotEl.ondragover = (e) => e.preventDefault();
+      slotEl.ondragenter = (e) => {
+        e.preventDefault();
+        slotEl.classList.add('drag-over');
+      };
+      slotEl.ondragleave = () => slotEl.classList.remove('drag-over');
+      slotEl.ondrop = (e) => this.handleDrop(e, slot);
     });
     
     // Update bonus stats display
@@ -1207,6 +1270,90 @@ class Game {
     } else {
       bonusStatsEl.classList.add('hidden');
     }
+  }
+
+  getSlotEmoji(slot) {
+    const emojis = {
+      helmet: '🪖',
+      leftHand: '🗡️',
+      rightHand: '🛡️',
+      necklace: '📿',
+      armor: '👕',
+      ring1: '💍',
+      ring2: '💍',
+      gloves: '🧤',
+      belt: '🔗',
+      boots: '👢'
+    };
+    return emojis[slot] || '?';
+  }
+
+  getItemEmoji(type) {
+    const emojis = {
+      helmet: '🪖',
+      weapon: '⚔️',
+      necklace: '📿',
+      armor: '👕',
+      ring: '💍',
+      gloves: '🧤',
+      belt: '🔗',
+      boots: '👢'
+    };
+    return emojis[type] || '❓';
+  }
+
+  handleDragStart(e, fromSlot) {
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', fromSlot);
+    e.target.classList.add('dragging');
+  }
+
+  handleDrop(e, toSlot) {
+    e.preventDefault();
+    e.target.classList.remove('drag-over');
+    const fromSlot = e.dataTransfer.getData('text/plain');
+    
+    if(fromSlot && fromSlot !== toSlot) {
+      // Swap items
+      const temp = this.inventory[fromSlot];
+      this.inventory[fromSlot] = this.inventory[toSlot];
+      this.inventory[toSlot] = temp;
+      
+      this.updateInventoryUI();
+      updateUI();
+    }
+    
+    document.querySelectorAll('.dragging').forEach(el => el.classList.remove('dragging'));
+  }
+
+  showItemTooltip(e, item) {
+    const tooltip = $("itemTooltip");
+    tooltip.classList.remove('hidden');
+    
+    tooltip.innerHTML = `
+      <div class="tooltip-name">${item.name}</div>
+      <div class="tooltip-rarity ${item.rarity}">${item.rarity.toUpperCase()}</div>
+      <div class="tooltip-stats">${this.formatItemStatsTooltip(item.stats)}</div>
+    `;
+    
+    // Position tooltip
+    const rect = e.target.getBoundingClientRect();
+    tooltip.style.left = (rect.right + 10) + 'px';
+    tooltip.style.top = rect.top + 'px';
+  }
+
+  hideItemTooltip() {
+    const tooltip = $("itemTooltip");
+    tooltip.classList.add('hidden');
+  }
+
+  formatItemStatsTooltip(stats) {
+    const parts = [];
+    if(stats.attack) parts.push(`<div class="tooltip-stat">⚔️ ${stats.attack > 0 ? '+' : ''}${stats.attack} Attack</div>`);
+    if(stats.hp) parts.push(`<div class="tooltip-stat">❤️ ${stats.hp > 0 ? '+' : ''}${stats.hp} Health</div>`);
+    if(stats.energy) parts.push(`<div class="tooltip-stat">⚡ ${stats.energy > 0 ? '+' : ''}${stats.energy} Energy</div>`);
+    if(stats.draw) parts.push(`<div class="tooltip-stat">📜 ${stats.draw > 0 ? '+' : ''}${stats.draw} Draw</div>`);
+    return parts.join('');
   }
 
   getTotalEquipmentStats() {
@@ -1330,9 +1477,28 @@ function updateUI(){
 
 /* bootstrap */
 window.addEventListener('load', ()=>{
-  window.G = new Game();
-  updateUI();
-
-  // make hand clickable by delegating to Game.playCardFromHand
-  // (already wired up)
+  // Main Menu Handlers
+  const mainMenu = $("mainMenu");
+  const gameScreen = $("gameScreen");
+  const saveManagementScreen = $("saveManagementScreen");
+  
+  $("newRunBtn").addEventListener('click', () => {
+    mainMenu.classList.add('hidden');
+    gameScreen.classList.remove('hidden');
+    window.G = new Game();
+    updateUI();
+  });
+  
+  $("saveManagementBtn").addEventListener('click', () => {
+    mainMenu.classList.add('hidden');
+    saveManagementScreen.classList.remove('hidden');
+  });
+  
+  $("backToMenuBtn").addEventListener('click', () => {
+    saveManagementScreen.classList.add('hidden');
+    mainMenu.classList.remove('hidden');
+  });
+  
+  // Show main menu first
+  mainMenu.classList.remove('hidden');
 });

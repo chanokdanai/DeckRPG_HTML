@@ -9,6 +9,73 @@
 }
 *{box-sizing:border-box;font-family:Inter,ui-sans-serif,system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial}
 html,body{height:100%;margin:0;background:linear-gradient(180deg,#061226 0%, #071426 100%);color:#e6eef8}
+
+/* Screen Management */
+.screen{display:none}
+.screen:not(.hidden){display:block}
+
+/* Main Menu */
+.menu-container{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  min-height:100vh;
+  padding:20px;
+}
+.menu-title{
+  font-size:4rem;
+  margin:0;
+  color:var(--accent);
+  text-shadow:0 0 20px rgba(255,204,51,0.5);
+  font-weight:900;
+}
+.menu-subtitle{
+  font-size:1.5rem;
+  color:var(--muted);
+  margin-bottom:60px;
+}
+.menu-buttons{
+  display:flex;
+  flex-direction:column;
+  gap:20px;
+  width:300px;
+}
+.menu-btn{
+  padding:16px 32px;
+  font-size:1.2rem;
+  font-weight:700;
+  border:none;
+  border-radius:8px;
+  cursor:pointer;
+  transition:all 0.3s ease;
+  background:#233447;
+  color:#e6eef8;
+}
+.menu-btn.primary{
+  background:var(--accent);
+  color:#081426;
+}
+.menu-btn:hover{
+  transform:translateY(-2px);
+  box-shadow:0 8px 16px rgba(0,0,0,0.3);
+}
+.menu-btn.primary:hover{
+  box-shadow:0 8px 16px rgba(255,204,51,0.4);
+}
+.save-list{
+  margin:30px 0;
+  min-height:200px;
+  width:400px;
+}
+.save-item{
+  padding:15px;
+  background:var(--panel);
+  border-radius:8px;
+  margin-bottom:10px;
+  color:var(--muted);
+}
+
 header{display:flex;justify-content:space-between;align-items:center;padding:12px 18px;background:rgba(0,0,0,0.12);} 
 h1{margin:0;font-size:1.1rem}
 #meta{display:flex;gap:12px;color:var(--muted);font-size:0.95rem}
@@ -135,8 +202,111 @@ main{display:grid;grid-template-columns:320px 1fr 280px;gap:16px;padding:18px}
 #endStats div{margin:8px 0}
 footer{padding:12px 18px;color:var(--muted);font-size:0.85rem}
 
-/* Inventory Styles */
-#inventoryArea{grid-row:1 / 3}
+/* Inventory Styles - Diablo-style Grid */
+#inventoryArea{
+  grid-row:1 / 3;
+  position:relative;
+}
+.inventory-grid{
+  display:grid;
+  grid-template-columns:repeat(3, 80px);
+  grid-template-rows:repeat(6, 80px);
+  gap:8px;
+  justify-content:center;
+  margin:20px auto;
+}
+
+/* Human-shaped layout */
+.inventory-grid .inv-slot:nth-child(1){grid-column:2;grid-row:1} /* Helmet */
+.inventory-grid .inv-slot:nth-child(2){grid-column:1;grid-row:2} /* Left hand */
+.inventory-grid .inv-slot:nth-child(3){grid-column:2;grid-row:2} /* Necklace */
+.inventory-grid .inv-slot:nth-child(4){grid-column:3;grid-row:2} /* Right hand */
+.inventory-grid .inv-slot:nth-child(5){grid-column:2;grid-row:3} /* Armor */
+.inventory-grid .inv-slot:nth-child(6){grid-column:1;grid-row:4} /* Ring 1 */
+.inventory-grid .inv-slot:nth-child(7){grid-column:3;grid-row:4} /* Ring 2 */
+.inventory-grid .inv-slot:nth-child(8){grid-column:1;grid-row:5} /* Gloves */
+.inventory-grid .inv-slot:nth-child(9){grid-column:2;grid-row:5} /* Belt */
+.inventory-grid .inv-slot:nth-child(10){grid-column:2;grid-row:6} /* Boots */
+
+.inv-slot{
+  width:80px;
+  height:80px;
+  background:rgba(0,0,0,0.4);
+  border:2px solid rgba(255,204,51,0.3);
+  border-radius:8px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  position:relative;
+  cursor:pointer;
+  transition:all 0.3s ease;
+}
+.inv-slot.empty{border-style:dashed;opacity:0.6}
+.inv-slot.empty .slot-icon{opacity:0.3;font-size:2rem}
+.inv-slot:not(.empty){
+  border-style:solid;
+  background:linear-gradient(135deg, rgba(16,32,51,0.9), rgba(11,18,32,0.9));
+}
+.inv-slot:hover{
+  border-color:var(--accent);
+  box-shadow:0 0 15px rgba(255,204,51,0.4);
+  transform:scale(1.05);
+}
+.inv-slot.dragging{opacity:0.5}
+.inv-slot.drag-over{
+  background:rgba(255,204,51,0.2);
+  border-color:var(--accent);
+}
+.item-icon{
+  width:100%;
+  height:100%;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  padding:4px;
+}
+.item-icon-image{font-size:2.5rem;margin-bottom:4px}
+.item-icon-name{
+  font-size:0.65rem;
+  text-align:center;
+  line-height:1.1;
+  font-weight:700;
+}
+.item-rarity-border{position:absolute;inset:0;border-radius:6px;pointer-events:none}
+.inv-slot.common .item-rarity-border{box-shadow:inset 0 0 10px rgba(155,155,155,0.5)}
+.inv-slot.uncommon .item-rarity-border{box-shadow:inset 0 0 10px rgba(82,196,26,0.6)}
+.inv-slot.rare .item-rarity-border{box-shadow:inset 0 0 10px rgba(24,144,255,0.7)}
+.inv-slot.legendary .item-rarity-border{box-shadow:inset 0 0 15px rgba(255,165,0,0.9)}
+
+/* Item Tooltip */
+.item-tooltip{
+  position:absolute;
+  background:rgba(0,0,0,0.95);
+  border:2px solid var(--accent);
+  border-radius:8px;
+  padding:12px;
+  min-width:200px;
+  max-width:300px;
+  z-index:1000;
+  pointer-events:none;
+  box-shadow:0 4px 12px rgba(0,0,0,0.5);
+}
+.item-tooltip.hidden{display:none}
+.tooltip-name{font-size:1.1rem;font-weight:700;margin-bottom:6px}
+.tooltip-rarity{
+  font-size:0.85rem;
+  text-transform:uppercase;
+  margin-bottom:8px;
+  letter-spacing:0.5px;
+}
+.tooltip-rarity.common{color:#9b9b9b}
+.tooltip-rarity.uncommon{color:#52c41a}
+.tooltip-rarity.rare{color:#1890ff}
+.tooltip-rarity.legendary{color:#ffa500}
+.tooltip-stats{font-size:0.9rem;line-height:1.6;color:#e6eef8}
+.tooltip-stat{margin:4px 0}
+
 #equipmentSlots{
   display:grid;
   grid-template-columns:1fr 1fr;
