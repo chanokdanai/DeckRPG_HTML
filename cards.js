@@ -299,7 +299,7 @@ function createCardWithEffect(template, game) {
       else if(template.id === 'cleave') atkDmg = 8;
       playFn = (g,owner,target) => {
         const bonus = owner.baseAttack || 0;
-        const actual = target.takeDamage(atkDmg + bonus);
+        const actual = g.applyDamage(target, atkDmg + bonus);
         g.log(`${owner.name} deals ${actual} damage to ${target.name}.`);
       };
       break;
@@ -313,7 +313,7 @@ function createCardWithEffect(template, game) {
     case 'heavy':
       playFn = (g,owner,target) => {
         const bonus = owner.baseAttack || 0;
-        const actual = target.takeDamage(12 + bonus);
+        const actual = g.applyDamage(target, 12 + bonus);
         g.log(`${owner.name} deals ${actual} heavy damage to ${target.name}.`);
       };
       break;
@@ -326,14 +326,14 @@ function createCardWithEffect(template, game) {
     case 'bash':
       playFn = (g,owner,target) => {
         const bonus = owner.baseAttack || 0;
-        const actual = target.takeDamage(16 + bonus);
+        const actual = g.applyDamage(target, 16 + bonus);
         g.log(`${owner.name} bashes for ${actual} damage!`);
       };
       break;
     case 'powerStrike':
       playFn = (g,owner,target) => {
         const bonus = owner.baseAttack || 0;
-        const actual = target.takeDamage(15 + bonus);
+        const actual = g.applyDamage(target, 15 + bonus);
         g.log(`${owner.name} power strikes for ${actual} damage!`);
       };
       break;
@@ -346,7 +346,7 @@ function createCardWithEffect(template, game) {
     case 'rampage':
       playFn = (g,owner,target) => {
         const bonus = owner.baseAttack || 0;
-        const actual = target.takeDamage(20 + bonus);
+        const actual = g.applyDamage(target, 20 + bonus);
         g.log(`${owner.name} rampages for ${actual} massive damage!`);
       };
       break;
@@ -359,7 +359,7 @@ function createCardWithEffect(template, game) {
     case 'reaper':
       playFn = (g,owner,target) => {
         const bonus = owner.baseAttack || 0;
-        const actual = target.takeDamage(8 + bonus);
+        const actual = g.applyDamage(target, 8 + bonus);
         owner.heal(actual);
         g.log(`${owner.name} reaps ${actual} damage and heals for ${actual}!`);
       };
@@ -367,7 +367,7 @@ function createCardWithEffect(template, game) {
     case 'execute':
       playFn = (g,owner,target) => {
         const bonus = owner.baseAttack || 0;
-        const actual = target.takeDamage(18 + bonus);
+        const actual = g.applyDamage(target, 18 + bonus);
         g.log(`${owner.name} executes for ${actual} damage!`);
       };
       break;
@@ -402,7 +402,7 @@ function createCardWithEffect(template, game) {
     case 'omnislash':
       playFn = (g,owner,target) => {
         const bonus = owner.baseAttack || 0;
-        const actual = target.takeDamage(25 + bonus);
+        const actual = g.applyDamage(target, 25 + bonus);
         g.log(`${owner.name} omnislashes for ${actual} devastating damage!`);
       };
       break;
@@ -415,7 +415,7 @@ function createCardWithEffect(template, game) {
     case 'phoenix':
       playFn = (g,owner,target) => {
         const bonus = owner.baseAttack || 0;
-        const actual = target.takeDamage(10 + bonus);
+        const actual = g.applyDamage(target, 10 + bonus);
         owner.heal(10);
         g.log(`${owner.name} channels phoenix power: ${actual} damage and 10 HP healed!`);
       };

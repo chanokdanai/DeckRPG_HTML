@@ -89,10 +89,40 @@ Game.prototype.playCardFromHand = function(index){
   updateUI();
 };
 
+Game.prototype.applyDamage = function(target, amount){
+  const actual = target.takeDamage(amount);
+  if(actual > 0){
+    if(target === this.enemy) {
+      this.showDamageNumber("enemy", actual);
+    } else if(target === this.player) {
+      this.showDamageNumber("player", actual);
+    }
+  }
+  return actual;
+};
+
+const DAMAGE_FLOAT_TIMEOUT_MS = 1000;
+
+Game.prototype.showDamageNumber = function(targetType, amount){
+  const targetEl = $(targetType === "player" ? "playerArea" : "enemyArea");
+  if(!targetEl) return;
+  const floatEl = document.createElement('div');
+  floatEl.className = 'damage-float';
+  floatEl.textContent = `-${amount}`;
+  targetEl.appendChild(floatEl);
+  const cleanup = () => {
+    if(floatEl.parentNode) {
+      floatEl.remove();
+    }
+  };
+  floatEl.addEventListener('animationend', cleanup);
+  setTimeout(cleanup, DAMAGE_FLOAT_TIMEOUT_MS);
+};
+
 Game.prototype.enemyTurn = function(){
   if(!this.enemy) return;
   const atk = this.enemy.atk + rand(3);
-  const dmg = this.player.takeDamage(atk);
+  const dmg = this.applyDamage(this.player, atk);
   this.log(`${this.enemy.name} attacks for ${atk} (${dmg} damage after block).`);
   if(this.player.hp <= 0){
     this.showGameOver();
