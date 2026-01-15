@@ -18,20 +18,24 @@ const ITEM_POOL = {
       {id:'rusty_sword', name:'Rusty Sword', type:'weapon', rarity:'common', stats:{attack:2}},
       {id:'wooden_club', name:'Wooden Club', type:'weapon', rarity:'common', stats:{attack:3}},
       {id:'iron_dagger', name:'Iron Dagger', type:'weapon', rarity:'common', stats:{attack:2, draw:1}},
+      {id:'wooden_shield', name:'Wooden Shield', type:'weapon', rarity:'common', stats:{hp:5}},
     ],
     uncommon: [
       {id:'steel_sword', name:'Steel Sword', type:'weapon', rarity:'uncommon', stats:{attack:5}},
       {id:'war_axe', name:'War Axe', type:'weapon', rarity:'uncommon', stats:{attack:6, hp:-5}},
       {id:'enchanted_blade', name:'Enchanted Blade', type:'weapon', rarity:'uncommon', stats:{attack:4, energy:1}},
+      {id:'iron_shield', name:'Iron Shield', type:'weapon', rarity:'uncommon', stats:{hp:8, attack:1}},
     ],
     rare: [
       {id:'flaming_sword', name:'Flaming Sword', type:'weapon', rarity:'rare', stats:{attack:8, hp:5}},
       {id:'vorpal_blade', name:'Vorpal Blade', type:'weapon', rarity:'rare', stats:{attack:10}},
       {id:'lightning_spear', name:'Lightning Spear', type:'weapon', rarity:'rare', stats:{attack:7, draw:1}},
+      {id:'enchanted_shield', name:'Enchanted Shield', type:'weapon', rarity:'rare', stats:{hp:12, energy:1}},
     ],
     legendary: [
       {id:'excalibur', name:'Excalibur', type:'weapon', rarity:'legendary', stats:{attack:15, hp:10}},
       {id:'doombringer', name:'Doombringer', type:'weapon', rarity:'legendary', stats:{attack:18, energy:1}},
+      {id:'aegis_shield', name:'Aegis Shield', type:'weapon', rarity:'legendary', stats:{hp:20, attack:5}},
     ]
   },
   armor: {
@@ -55,28 +59,92 @@ const ITEM_POOL = {
       {id:'archmage_robe', name:'Archmage Robe', type:'armor', rarity:'legendary', stats:{hp:20, energy:2, draw:2}},
     ]
   },
-  accessory: {
+  boots: {
     common: [
-      {id:'health_ring', name:'Health Ring', type:'accessory', rarity:'common', stats:{hp:5}},
-      {id:'power_amulet', name:'Power Amulet', type:'accessory', rarity:'common', stats:{attack:2}},
-      {id:'energy_charm', name:'Energy Charm', type:'accessory', rarity:'common', stats:{energy:1}},
+      {id:'leather_boots', name:'Leather Boots', type:'boots', rarity:'common', stats:{hp:3}},
+      {id:'traveler_boots', name:"Traveler's Boots", type:'boots', rarity:'common', stats:{draw:1}},
+      {id:'iron_boots', name:'Iron Boots', type:'boots', rarity:'common', stats:{hp:5, energy:-1}},
     ],
     uncommon: [
-      {id:'vampiric_ring', name:'Vampiric Ring', type:'accessory', rarity:'uncommon', stats:{attack:3, hp:5}},
-      {id:'sages_pendant', name:"Sage's Pendant", type:'accessory', rarity:'uncommon', stats:{draw:2, energy:1}},
-      {id:'berserker_belt', name:'Berserker Belt', type:'accessory', rarity:'uncommon', stats:{attack:5, hp:-5}},
+      {id:'swiftness_boots', name:'Boots of Swiftness', type:'boots', rarity:'uncommon', stats:{draw:1, energy:1}},
+      {id:'steel_greaves', name:'Steel Greaves', type:'boots', rarity:'uncommon', stats:{hp:8, attack:1}},
+      {id:'mage_boots', name:'Mage Boots', type:'boots', rarity:'uncommon', stats:{energy:1, draw:1}},
     ],
     rare: [
-      {id:'phoenix_feather', name:'Phoenix Feather', type:'accessory', rarity:'rare', stats:{hp:15, draw:1}},
-      {id:'warlords_signet', name:"Warlord's Signet", type:'accessory', rarity:'rare', stats:{attack:6, energy:1}},
-      {id:'arcane_orb', name:'Arcane Orb', type:'accessory', rarity:'rare', stats:{energy:2, draw:2}},
+      {id:'dragon_boots', name:'Dragon Boots', type:'boots', rarity:'rare', stats:{hp:10, attack:2}},
+      {id:'winged_boots', name:'Winged Boots', type:'boots', rarity:'rare', stats:{draw:2, energy:1}},
+      {id:'crusader_boots', name:'Crusader Boots', type:'boots', rarity:'rare', stats:{hp:12, energy:1}},
     ],
     legendary: [
-      {id:'infinity_stone', name:'Infinity Stone', type:'accessory', rarity:'legendary', stats:{attack:8, hp:15, energy:2}},
-      {id:'ring_of_gods', name:'Ring of Gods', type:'accessory', rarity:'legendary', stats:{attack:10, hp:20, draw:2}},
+      {id:'hermes_sandals', name:'Hermes Sandals', type:'boots', rarity:'legendary', stats:{draw:3, energy:2}},
+      {id:'titans_stride', name:"Titan's Stride", type:'boots', rarity:'legendary', stats:{hp:15, attack:3, energy:1}},
+    ]
+  },
+  gloves: {
+    common: [
+      {id:'leather_gloves', name:'Leather Gloves', type:'gloves', rarity:'common', stats:{attack:1}},
+      {id:'cloth_gloves', name:'Cloth Gloves', type:'gloves', rarity:'common', stats:{draw:1}},
+      {id:'iron_gauntlets', name:'Iron Gauntlets', type:'gloves', rarity:'common', stats:{attack:2, hp:2}},
+    ],
+    uncommon: [
+      {id:'warrior_gloves', name:'Warrior Gloves', type:'gloves', rarity:'uncommon', stats:{attack:3, hp:3}},
+      {id:'mage_gloves', name:'Mage Gloves', type:'gloves', rarity:'uncommon', stats:{energy:1, draw:1}},
+      {id:'berserker_gauntlets', name:'Berserker Gauntlets', type:'gloves', rarity:'uncommon', stats:{attack:4, hp:-3}},
+    ],
+    rare: [
+      {id:'dragon_gauntlets', name:'Dragon Gauntlets', type:'gloves', rarity:'rare', stats:{attack:5, hp:5}},
+      {id:'arcane_gloves', name:'Arcane Gloves', type:'gloves', rarity:'rare', stats:{energy:2, draw:1}},
+      {id:'blessed_gauntlets', name:'Blessed Gauntlets', type:'gloves', rarity:'rare', stats:{attack:4, hp:8}},
+    ],
+    legendary: [
+      {id:'fist_of_gods', name:'Fist of Gods', type:'gloves', rarity:'legendary', stats:{attack:8, hp:10, energy:1}},
+      {id:'infinity_gauntlets', name:'Infinity Gauntlets', type:'gloves', rarity:'legendary', stats:{attack:10, energy:2, draw:2}},
+    ]
+  },
+  ring: {
+    common: [
+      {id:'health_ring', name:'Health Ring', type:'ring', rarity:'common', stats:{hp:5}},
+      {id:'power_ring', name:'Power Ring', type:'ring', rarity:'common', stats:{attack:2}},
+      {id:'energy_ring', name:'Energy Ring', type:'ring', rarity:'common', stats:{energy:1}},
+    ],
+    uncommon: [
+      {id:'vampiric_ring', name:'Vampiric Ring', type:'ring', rarity:'uncommon', stats:{attack:3, hp:5}},
+      {id:'sages_ring', name:"Sage's Ring", type:'ring', rarity:'uncommon', stats:{draw:2, energy:1}},
+      {id:'berserker_ring', name:'Berserker Ring', type:'ring', rarity:'uncommon', stats:{attack:5, hp:-5}},
+    ],
+    rare: [
+      {id:'phoenix_ring', name:'Phoenix Ring', type:'ring', rarity:'rare', stats:{hp:15, draw:1}},
+      {id:'warlords_ring', name:"Warlord's Ring", type:'ring', rarity:'rare', stats:{attack:6, energy:1}},
+      {id:'arcane_ring', name:'Arcane Ring', type:'ring', rarity:'rare', stats:{energy:2, draw:2}},
+    ],
+    legendary: [
+      {id:'infinity_band', name:'Infinity Band', type:'ring', rarity:'legendary', stats:{attack:8, hp:15, energy:2}},
+      {id:'ring_of_gods', name:'Ring of Gods', type:'ring', rarity:'legendary', stats:{attack:10, hp:20, draw:2}},
+    ]
+  },
+  necklace: {
+    common: [
+      {id:'simple_amulet', name:'Simple Amulet', type:'necklace', rarity:'common', stats:{hp:5}},
+      {id:'power_pendant', name:'Power Pendant', type:'necklace', rarity:'common', stats:{attack:2}},
+      {id:'focus_charm', name:'Focus Charm', type:'necklace', rarity:'common', stats:{draw:1}},
+    ],
+    uncommon: [
+      {id:'life_pendant', name:'Life Pendant', type:'necklace', rarity:'uncommon', stats:{hp:10, energy:1}},
+      {id:'strength_amulet', name:'Strength Amulet', type:'necklace', rarity:'uncommon', stats:{attack:4, hp:5}},
+      {id:'wisdom_pendant', name:'Wisdom Pendant', type:'necklace', rarity:'uncommon', stats:{draw:2, energy:1}},
+    ],
+    rare: [
+      {id:'phoenix_feather', name:'Phoenix Feather', type:'necklace', rarity:'rare', stats:{hp:15, draw:1}},
+      {id:'dragon_fang', name:'Dragon Fang', type:'necklace', rarity:'rare', stats:{attack:7, hp:10}},
+      {id:'arcane_amulet', name:'Arcane Amulet', type:'necklace', rarity:'rare', stats:{energy:2, draw:2}},
+    ],
+    legendary: [
+      {id:'infinity_stone', name:'Infinity Stone', type:'necklace', rarity:'legendary', stats:{attack:8, hp:15, energy:2}},
+      {id:'eye_of_gods', name:'Eye of Gods', type:'necklace', rarity:'legendary', stats:{attack:10, hp:20, draw:3, energy:2}},
     ]
   }
 };
+
 
 /* Get loot drops based on enemy/event type and rarity */
 function generateLoot(sourceType, rarityBonus = 0) {
@@ -104,7 +172,7 @@ function generateLoot(sourceType, rarityBonus = 0) {
     if(Math.random() > dropChance) continue;
     
     // Select item type
-    const types = ['weapon', 'armor', 'accessory'];
+    const types = ['weapon', 'armor', 'boots', 'gloves', 'ring', 'necklace'];
     const itemType = types[rand(types.length)];
     
     // Select rarity with bonus
@@ -392,9 +460,14 @@ class Game {
     this.mapNodes = [];
     this.gold = 0;
     this.inventory = {
-      weapon: null,
+      leftHand: null,
+      rightHand: null,
       armor: null,
-      accessory: null
+      boots: null,
+      gloves: null,
+      ring1: null,
+      ring2: null,
+      necklace: null
     };
     this.startTime = Date.now();
     this.roomsCleared = 0;
@@ -579,11 +652,39 @@ class Game {
         if(!node.locked){
           g.style.cursor = 'pointer';
           g.addEventListener('click', () => this.selectNode(node));
+          
+          // Tooltip handlers
+          g.addEventListener('mouseenter', (e) => this.showMapTooltip(node, x, y));
+          g.addEventListener('mouseleave', () => this.hideMapTooltip());
         }
         
         svg.appendChild(g);
       });
     });
+  }
+
+  showMapTooltip(node, x, y) {
+    const tooltip = $("mapTooltip");
+    const labels = {
+      combat: 'Combat',
+      elite: 'Elite Enemy',
+      rest: 'Rest Site',
+      treasure: 'Treasure',
+      boss: 'Boss Fight'
+    };
+    tooltip.textContent = labels[node.type] || node.type;
+    tooltip.classList.add('show');
+    
+    // Position tooltip near the node
+    const container = $("mapContainer");
+    const rect = container.getBoundingClientRect();
+    tooltip.style.left = (x + 30) + 'px';
+    tooltip.style.top = (y - 10) + 'px';
+  }
+
+  hideMapTooltip() {
+    const tooltip = $("mapTooltip");
+    tooltip.classList.remove('show');
   }
 
   getNodeIcon(type){
@@ -993,7 +1094,32 @@ class Game {
 
   /* Inventory Management */
   equipItem(item) {
-    const slot = item.type;
+    let slot = item.type;
+    
+    // Map item types to inventory slots
+    if(item.type === 'weapon') {
+      // Try to equip in left hand first, then right hand
+      if(!this.inventory.leftHand) {
+        slot = 'leftHand';
+      } else if(!this.inventory.rightHand) {
+        slot = 'rightHand';
+      } else {
+        // Replace left hand if both are full
+        slot = 'leftHand';
+      }
+    } else if(item.type === 'ring') {
+      // Try ring1 first, then ring2
+      if(!this.inventory.ring1) {
+        slot = 'ring1';
+      } else if(!this.inventory.ring2) {
+        slot = 'ring2';
+      } else {
+        // Replace ring1 if both are full
+        slot = 'ring1';
+      }
+    }
+    // For armor, boots, gloves, necklace, use the type directly as slot
+    
     const oldItem = this.inventory[slot];
     
     // Unequip old item if exists
@@ -1049,7 +1175,7 @@ class Game {
 
   updateInventoryUI() {
     // Update equipment slots
-    ['weapon', 'armor', 'accessory'].forEach(slot => {
+    ['leftHand', 'rightHand', 'armor', 'boots', 'gloves', 'ring1', 'ring2', 'necklace'].forEach(slot => {
       const slotEl = $(slot + 'Slot');
       const item = this.inventory[slot];
       

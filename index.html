@@ -20,6 +20,7 @@
       <h2>Choose Your Path</h2>
       <div id="mapContainer">
         <svg id="mapSvg" width="800" height="600"></svg>
+        <div id="mapTooltip" class="map-tooltip"></div>
       </div>
     </section>
 
@@ -83,17 +84,37 @@
     <section id="inventoryArea">
       <h3>Inventory</h3>
       <div id="equipmentSlots">
-        <div class="equipment-slot" data-slot="weapon">
-          <div class="slot-label">Weapon</div>
-          <div id="weaponSlot" class="slot-content empty">Empty</div>
+        <div class="equipment-slot" data-slot="leftHand">
+          <div class="slot-label">Left Hand</div>
+          <div id="leftHandSlot" class="slot-content empty">Empty</div>
+        </div>
+        <div class="equipment-slot" data-slot="rightHand">
+          <div class="slot-label">Right Hand</div>
+          <div id="rightHandSlot" class="slot-content empty">Empty</div>
         </div>
         <div class="equipment-slot" data-slot="armor">
           <div class="slot-label">Armor</div>
           <div id="armorSlot" class="slot-content empty">Empty</div>
         </div>
-        <div class="equipment-slot" data-slot="accessory">
-          <div class="slot-label">Accessory</div>
-          <div id="accessorySlot" class="slot-content empty">Empty</div>
+        <div class="equipment-slot" data-slot="boots">
+          <div class="slot-label">Boots</div>
+          <div id="bootsSlot" class="slot-content empty">Empty</div>
+        </div>
+        <div class="equipment-slot" data-slot="gloves">
+          <div class="slot-label">Gloves</div>
+          <div id="glovesSlot" class="slot-content empty">Empty</div>
+        </div>
+        <div class="equipment-slot" data-slot="ring1">
+          <div class="slot-label">Ring 1</div>
+          <div id="ring1Slot" class="slot-content empty">Empty</div>
+        </div>
+        <div class="equipment-slot" data-slot="ring2">
+          <div class="slot-label">Ring 2</div>
+          <div id="ring2Slot" class="slot-content empty">Empty</div>
+        </div>
+        <div class="equipment-slot" data-slot="necklace">
+          <div class="slot-label">Necklace</div>
+          <div id="necklaceSlot" class="slot-content empty">Empty</div>
         </div>
       </div>
       <div id="bonusStats" class="hidden">
