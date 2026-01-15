@@ -6,6 +6,8 @@ const BAG_SIZE = 12;
 const POTION_SLOTS = 3;
 const BASE_ATTRIBUTE_POINTS = 5;
 const STARTING_EXP_TO_LEVEL = 20;
+const EXP_LEVEL_MULTIPLIER = 1.35;
+const EXP_LEVEL_BONUS = 5;
 class Deck {
   constructor(cards){
     this.drawPile = [...cards];
@@ -228,7 +230,7 @@ class Game {
     while(this.player.exp >= this.player.expToLevel){
       this.player.exp -= this.player.expToLevel;
       this.player.level += 1;
-      this.player.expToLevel = Math.floor(this.player.expToLevel * 1.35) + 5;
+      this.player.expToLevel = Math.floor(this.player.expToLevel * EXP_LEVEL_MULTIPLIER) + EXP_LEVEL_BONUS;
       this.pendingLevelUps += 1;
     }
     if(this.pendingLevelUps > 0){

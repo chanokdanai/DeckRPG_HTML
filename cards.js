@@ -217,6 +217,8 @@ const ITEM_POOL = {
   }
 };
 
+const UNIQUE_RARITY_THRESHOLD = 1.15;
+
 
 /* Get loot drops based on enemy/event type and rarity */
 function generateLoot(sourceType, rarityBonus = 0) {
@@ -249,7 +251,7 @@ function generateLoot(sourceType, rarityBonus = 0) {
     // Select rarity with bonus
     const rarityRoll = Math.random() + rarityBonus;
     let rarity;
-    if(rarityRoll > 1.15) rarity = 'unique';
+    if(rarityRoll > UNIQUE_RARITY_THRESHOLD) rarity = 'unique';
     else if(rarityRoll > 0.97) rarity = 'legendary';
     else if(rarityRoll > 0.85) rarity = 'rare';
     else if(rarityRoll > 0.60) rarity = 'uncommon';

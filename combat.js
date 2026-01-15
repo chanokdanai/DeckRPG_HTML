@@ -1,9 +1,14 @@
 /* Combat helpers */
+const ENEMY_COUNTS = {
+  boss: 1,
+  elite: 3,
+  combat: 2
+};
 Game.prototype.startCombat = function(type){
   $("combat").classList.remove('hidden');
   $("nextRoomBtn").disabled = true;
   
-  const enemyCount = type === 'boss' ? 1 : (type === 'elite' ? 3 : 2);
+  const enemyCount = ENEMY_COUNTS[type] ?? ENEMY_COUNTS.combat;
   this.enemies = [];
   this.currentCombatType = type;
   for(let i = 0; i < enemyCount; i++){

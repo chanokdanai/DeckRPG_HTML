@@ -41,9 +41,10 @@ function updateUI(){
           card.classList.add('selected');
         }
         const hpPercent = enemy.maxHp ? (enemy.hp / enemy.maxHp) * 100 : 0;
+        const spriteId = Number.isInteger(enemy.spriteId) && enemy.spriteId > 0 ? enemy.spriteId : 1;
         card.innerHTML = `
           <div class="target-arrow">⬇️</div>
-          <div class="sprite" style="background-image:url(https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${enemy.spriteId || 1}.png)"></div>
+          <div class="sprite" style="background-image:url(https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${spriteId}.png)"></div>
           <div class="enemy-name">${enemy.name}</div>
           <div class="hpbar"><div class="hp" style="width:${hpPercent}%"></div></div>
           <div class="enemy-stats">HP: ${enemy.hp}/${enemy.maxHp} ATK: ${enemy.atk}</div>

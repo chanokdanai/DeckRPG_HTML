@@ -312,12 +312,7 @@ Game.prototype.setupTrashDrop = function() {
     e.preventDefault();
     trash.classList.remove('drag-over');
     const raw = e.dataTransfer.getData('text/plain');
-    let payload;
-    try {
-      payload = JSON.parse(raw);
-    } catch (err){
-      payload = {type:'equip', slot: raw};
-    }
+    const payload = this.parseDragPayload(raw);
     this.trashItem(payload);
     this.handleDragEnd();
   };
@@ -401,17 +396,22 @@ Game.prototype.handleDragEnd = function() {
   }
 };
 
+Game.prototype.parseDragPayload = function(raw) {
+  if(!raw) return null;
+  try {
+    return JSON.parse(raw);
+  } catch (err) {
+    console.warn('Failed to parse drag payload', raw, err);
+    return {type:'equip', slot: raw};
+  }
+};
+
 Game.prototype.handleDrop = function(e, toSlot) {
   e.preventDefault();
   const targetEl = e.currentTarget || e.target;
   if(targetEl) targetEl.classList.remove('drag-over');
   const raw = e.dataTransfer.getData('text/plain');
-  let payload;
-  try {
-    payload = JSON.parse(raw);
-  } catch (err){
-    payload = {type:'equip', slot: raw};
-  }
+  const payload = this.parseDragPayload(raw);
 
   if(payload && payload.type === 'equip' && payload.slot && payload.slot !== toSlot) {
     const temp = this.inventory[payload.slot];
