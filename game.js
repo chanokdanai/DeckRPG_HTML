@@ -1015,7 +1015,7 @@ class Game {
     const stats = item.stats;
     if(stats.hp) {
       this.player.maxHp += stats.hp;
-      this.player.hp = Math.min(this.player.hp + stats.hp, this.player.maxHp);
+      this.player.hp = clamp(this.player.hp + stats.hp, 0, this.player.maxHp);
     }
     if(stats.attack) {
       this.player.baseAttack = (this.player.baseAttack || 0) + stats.attack;
@@ -1034,7 +1034,7 @@ class Game {
     const stats = item.stats;
     if(stats.hp) {
       this.player.maxHp -= stats.hp;
-      this.player.hp = Math.min(this.player.hp, this.player.maxHp);
+      this.player.hp = clamp(this.player.hp, 0, this.player.maxHp);
     }
     if(stats.attack) {
       this.player.baseAttack = (this.player.baseAttack || 0) - stats.attack;
@@ -1053,6 +1053,7 @@ class Game {
       const slotEl = $(slot + 'Slot');
       const item = this.inventory[slot];
       
+      // Clear existing content and event listeners by replacing innerHTML
       if(item) {
         slotEl.className = 'slot-content has-item';
         slotEl.innerHTML = `
@@ -1060,7 +1061,8 @@ class Game {
           <div class="item-stats">${this.formatItemStats(item.stats)}</div>
           <div class="item-rarity ${item.rarity}">${item.rarity}</div>
         `;
-        slotEl.addEventListener('click', () => this.unequipItem(slot));
+        // Use onclick to avoid listener accumulation
+        slotEl.onclick = () => this.unequipItem(slot);
       } else {
         slotEl.className = 'slot-content empty';
         slotEl.innerHTML = 'Empty';
@@ -1098,10 +1100,10 @@ class Game {
 
   formatItemStats(stats) {
     const parts = [];
-    if(stats.attack) parts.push(`+${stats.attack} ATK`);
+    if(stats.attack) parts.push(`${stats.attack > 0 ? '+' : ''}${stats.attack} ATK`);
     if(stats.hp) parts.push(`${stats.hp > 0 ? '+' : ''}${stats.hp} HP`);
     if(stats.energy) parts.push(`${stats.energy > 0 ? '+' : ''}${stats.energy} Energy`);
-    if(stats.draw) parts.push(`+${stats.draw} Draw`);
+    if(stats.draw) parts.push(`${stats.draw > 0 ? '+' : ''}${stats.draw} Draw`);
     return parts.join(', ');
   }
 
