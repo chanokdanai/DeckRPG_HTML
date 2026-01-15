@@ -45,8 +45,15 @@ const CARD_POOL = {
   ]
 };
 
-/* Pokemon sprite IDs - curated list for reliable sprite availability */
-const COMMON_POKEMON_IDS = [1,4,7,10,13,16,19,23,25,27,29,32,35,37,39,41,43,46,48,50,52,54,56,58,60,63,66,69,72,74,77,79,81,84,86,88,90,92,95,98];
+/* Pokemon sprite IDs - curated lists for reliable sprite availability */
+const COMMON_POKEMON_IDS = [
+  1,4,7,10,13,16,19,23,25,27,29,32,35,37,39,41,43,46,48,50,
+  52,54,56,58,60,63,66,69,72,74,77,79,81,84,86,88,90,92,95,98
+];
+const ELITE_POKEMON_IDS = [
+  150,151,144,145,146,243,244,245,380,381,382,383,384,
+  480,481,482,483,484,485,486,487,488,491,492,493
+];
 
 /* Create a card with its effect function from a template */
 function createCardWithEffect(template, game) {
@@ -377,8 +384,8 @@ class Game {
     // Enemy sprite - random Pokemon based on enemy type
     let enemySpriteId;
     if(type === 'elite'){
-      // Elite enemies use stronger Pokemon (150-200 range)
-      enemySpriteId = 150 + rand(51);
+      // Elite enemies use legendary/mythical Pokemon
+      enemySpriteId = ELITE_POKEMON_IDS[rand(ELITE_POKEMON_IDS.length)];
     } else {
       // Normal enemies use common Pokemon from curated list
       enemySpriteId = COMMON_POKEMON_IDS[rand(COMMON_POKEMON_IDS.length)];
