@@ -542,7 +542,6 @@ class Game {
   setupUI(){
     $("nextRoomBtn").addEventListener('click', ()=> this.nextRoom());
     $("endTurn").addEventListener('click', ()=> this.endTurn());
-    $("drawBtn").addEventListener('click', ()=> { this.drawToFull(); updateUI(); });
     $("skipReward").addEventListener('click', ()=> this.skipReward());
     $("leaveShop").addEventListener('click', ()=> this.leaveShop());
     $("restartBtn").addEventListener('click', ()=> this.restart());
