@@ -45,6 +45,9 @@ const CARD_POOL = {
   ]
 };
 
+/* Pokemon sprite IDs - curated list for reliable sprite availability */
+const COMMON_POKEMON_IDS = [1,4,7,10,13,16,19,23,25,27,29,32,35,37,39,41,43,46,48,50,52,54,56,58,60,63,66,69,72,74,77,79,81,84,86,88,90,92,95,98];
+
 /* Create a card with its effect function from a template */
 function createCardWithEffect(template, game) {
   let playFn;
@@ -377,9 +380,8 @@ class Game {
       // Elite enemies use stronger Pokemon (150-200 range)
       enemySpriteId = 150 + rand(51);
     } else {
-      // Normal enemies use common Pokemon (1-100 range, avoiding potential gaps)
-      const commonPokemon = [1,4,7,10,13,16,19,23,25,27,29,32,35,37,39,41,43,46,48,50,52,54,56,58,60,63,66,69,72,74,77,79,81,84,86,88,90,92,95,98];
-      enemySpriteId = commonPokemon[rand(commonPokemon.length)];
+      // Normal enemies use common Pokemon from curated list
+      enemySpriteId = COMMON_POKEMON_IDS[rand(COMMON_POKEMON_IDS.length)];
     }
     const enemySprite = $("enemySprite");
     enemySprite.style.backgroundImage = `url(https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${enemySpriteId}.png)`;
