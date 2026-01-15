@@ -468,3 +468,21 @@ footer{padding:12px 18px;color:var(--muted);font-size:0.85rem}
 @media(max-width:900px){
   main{grid-template-columns:1fr;padding:12px}
 }
+
+/* Reduced motion accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .card{
+    transition:all 0.2s ease;
+  }
+  .card:hover{
+    transform:translateY(-8px) scale(1.05);
+  }
+  .map-node{
+    transition:all 0.2s ease;
+  }
+  *{
+    animation-duration:0.01ms !important;
+    animation-iteration-count:1 !important;
+    transition-duration:0.01ms !important;
+  }
+}
