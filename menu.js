@@ -1,5 +1,5 @@
-const CLASS_SELECTION_LIMIT = 3;
-const CLASS_OPTION_COUNT = 5;
+const CLASS_SELECTION_LIMIT = 1;
+const CLASS_OPTION_COUNT = 3;
 const CLASS_NAMES = [
   'Blade Dancer',
   'Stormcaller',

@@ -248,14 +248,8 @@ Game.prototype.nextRoom = function(){
 };
 
 Game.prototype.enterRest = function(){
-  // simple rest: restore some HP and draw and reshuffle one card
-  const heal = Math.floor(this.player.maxHp * 0.2);
-  this.player.heal(heal);
-  this.log(`Rest: healed ${heal} HP.`);
-  this.roomsCleared++;
   updateUI();
-  // Auto-return to map after short delay
-  setTimeout(() => this.showMap(), 1500);
+  this.openCampModal();
 };
 
 Game.prototype.enterTreasure = function(){

@@ -4,7 +4,7 @@ function makeCard(id, name, cost, desc, playFn, rarity='common'){
 }
 
 /* Item/Equipment definitions for Diablo-style inventory system */
-const EQUIPMENT_TYPES = ['weapon', 'armor', 'boots', 'gloves', 'ring', 'necklace', 'helmet', 'belt'];
+const EQUIPMENT_TYPES = ['weapon', 'armor', 'boots', 'gloves', 'ring', 'necklace', 'helmet', 'belt', 'potion'];
 
 const EMOJI_MAP = {
   helmet: '🪖',
@@ -18,7 +18,8 @@ const EMOJI_MAP = {
   ring2: '💍',
   gloves: '🧤',
   belt: '🔗',
-  boots: '👢'
+  boots: '👢',
+  potion: '🧪'
 };
 
 const ITEM_POOL = {
@@ -45,6 +46,9 @@ const ITEM_POOL = {
       {id:'excalibur', name:'Excalibur', type:'weapon', rarity:'legendary', stats:{attack:15, hp:10}},
       {id:'doombringer', name:'Doombringer', type:'weapon', rarity:'legendary', stats:{attack:18, energy:1}},
       {id:'aegis_shield', name:'Aegis Shield', type:'weapon', rarity:'legendary', stats:{hp:20, attack:5}},
+    ],
+    unique: [
+      {id:'storm_glaive', name:'Storm Glaive', type:'weapon', rarity:'unique', stats:{attack:6}, uniqueEffect:{type:'aoe_bonus', bonus:3, description:'AOE cards deal +3 damage.'}}
     ]
   },
   armor: {
@@ -129,6 +133,9 @@ const ITEM_POOL = {
     legendary: [
       {id:'infinity_band', name:'Infinity Band', type:'ring', rarity:'legendary', stats:{attack:8, hp:15, energy:2}},
       {id:'ring_of_gods', name:'Ring of Gods', type:'ring', rarity:'legendary', stats:{attack:10, hp:20, draw:2}},
+    ],
+    unique: [
+      {id:'duelist_emblem', name:"Duelist's Emblem", type:'ring', rarity:'unique', stats:{attack:3}, uniqueEffect:{type:'combo_bonus', bonus:4, description:'Combo cards deal +4 damage when triggered.'}}
     ]
   },
   necklace: {
@@ -193,6 +200,20 @@ const ITEM_POOL = {
       {id:'belt_of_gods', name:'Belt of Gods', type:'belt', rarity:'legendary', stats:{hp:15, attack:5, energy:2}},
       {id:'eternity_sash', name:'Eternity Sash', type:'belt', rarity:'legendary', stats:{hp:10, energy:2, draw:3}},
     ]
+  },
+  potion: {
+    common: [
+      {id:'minor_heal', name:'Minor Healing Potion', type:'potion', rarity:'common', stats:{heal:8}},
+      {id:'swift_draught', name:'Swift Draught', type:'potion', rarity:'common', stats:{energy:1}}
+    ],
+    uncommon: [
+      {id:'healing_potion', name:'Healing Potion', type:'potion', rarity:'uncommon', stats:{heal:15}},
+      {id:'focus_tonic', name:'Focus Tonic', type:'potion', rarity:'uncommon', stats:{draw:1}}
+    ],
+    rare: [
+      {id:'greater_heal', name:'Greater Healing Potion', type:'potion', rarity:'rare', stats:{heal:25}},
+      {id:'battle_elixir', name:'Battle Elixir', type:'potion', rarity:'rare', stats:{attack:3}}
+    ]
   }
 };
 
@@ -228,15 +249,27 @@ function generateLoot(sourceType, rarityBonus = 0) {
     // Select rarity with bonus
     const rarityRoll = Math.random() + rarityBonus;
     let rarity;
-    if(rarityRoll > 0.97) rarity = 'legendary';
+    if(rarityRoll > 1.15) rarity = 'unique';
+    else if(rarityRoll > 0.97) rarity = 'legendary';
     else if(rarityRoll > 0.85) rarity = 'rare';
     else if(rarityRoll > 0.60) rarity = 'uncommon';
     else rarity = 'common';
     
     // Get item from pool
-    const pool = ITEM_POOL[itemType][rarity];
+    let pool = ITEM_POOL[itemType][rarity];
+    if(!pool || pool.length === 0){
+      const fallback = ['legendary', 'rare', 'uncommon', 'common'];
+      for(const rarityOption of fallback){
+        pool = ITEM_POOL[itemType][rarityOption];
+        if(pool && pool.length) {
+          rarity = rarityOption;
+          break;
+        }
+      }
+    }
     if(pool && pool.length > 0) {
       const item = {...pool[rand(pool.length)]};
+      item.rarity = rarity;
       loot.push(item);
     }
   }
@@ -247,34 +280,36 @@ function generateLoot(sourceType, rarityBonus = 0) {
 /* Card pool for rewards and shop */
 const CARD_POOL = {
   common: [
-    {id:'atk', name:'Strike', cost:1, desc:'Deal 6 damage', rarity:'common'},
-    {id:'def', name:'Defend', cost:1, desc:'Gain 6 block', rarity:'common'},
-    {id:'slash', name:'Slash', cost:1, desc:'Deal 7 damage', rarity:'common'},
-    {id:'shield', name:'Shield', cost:1, desc:'Gain 7 block', rarity:'common'},
-    {id:'quickStrike', name:'Quick Strike', cost:0, desc:'Deal 3 damage', rarity:'common'},
-    {id:'prepare', name:'Prepare', cost:1, desc:'Draw 1 card', rarity:'common'},
+    {id:'atk', name:'Strike', cost:1, desc:'Deal 6 damage', rarity:'common', mainStat:'str'},
+    {id:'def', name:'Defend', cost:1, desc:'Gain 6 block', rarity:'common', mainStat:'spd'},
+    {id:'slash', name:'Slash', cost:1, desc:'Deal 7 damage', rarity:'common', mainStat:'dex'},
+    {id:'shield', name:'Shield', cost:1, desc:'Gain 7 block', rarity:'common', mainStat:'spd'},
+    {id:'quickStrike', name:'Quick Strike', cost:0, desc:'Deal 3 damage', rarity:'common', mainStat:'dex'},
+    {id:'prepare', name:'Prepare', cost:1, desc:'Draw 1 card', rarity:'common', mainStat:'spd'},
   ],
   uncommon: [
-    {id:'heavy', name:'Heavy Strike', cost:2, desc:'Deal 12 damage', rarity:'uncommon'},
-    {id:'heal', name:'Heal', cost:1, desc:'Heal 8 HP', rarity:'uncommon'},
-    {id:'powerStrike', name:'Power Strike', cost:2, desc:'Deal 15 damage', rarity:'uncommon'},
-    {id:'ironWall', name:'Iron Wall', cost:2, desc:'Gain 12 block', rarity:'uncommon'},
-    {id:'tactician', name:'Tactician', cost:0, desc:'Draw 2 cards', rarity:'uncommon'},
-    {id:'cleave', name:'Cleave', cost:1, desc:'Deal 8 damage', rarity:'uncommon'},
+    {id:'heavy', name:'Heavy Strike', cost:2, desc:'Deal 12 damage', rarity:'uncommon', mainStat:'str'},
+    {id:'heal', name:'Heal', cost:1, desc:'Heal 8 HP', rarity:'uncommon', mainStat:'int'},
+    {id:'powerStrike', name:'Power Strike', cost:2, desc:'Deal 15 damage', rarity:'uncommon', mainStat:'str'},
+    {id:'ironWall', name:'Iron Wall', cost:2, desc:'Gain 12 block', rarity:'uncommon', mainStat:'spd'},
+    {id:'tactician', name:'Tactician', cost:0, desc:'Draw 2 cards', rarity:'uncommon', mainStat:'spd'},
+    {id:'cleave', name:'Cleave', cost:1, desc:'Deal 8 damage to ALL enemies', rarity:'uncommon', mainStat:'str', isAoe:true},
+    {id:'whirlwind', name:'Whirlwind', cost:2, desc:'Deal 6 damage to ALL enemies', rarity:'uncommon', mainStat:'dex', isAoe:true},
+    {id:'comboFinish', name:'Combo Finisher', cost:1, desc:'Deal 6 damage. Combo: +6 damage after Quick Strike or Slash', rarity:'uncommon', mainStat:'dex', comboFrom:['quickStrike','slash'], comboBonus:6},
   ],
   rare: [
-    {id:'bash', name:'Bash', cost:2, desc:'Deal 16 damage', rarity:'rare'},
-    {id:'rampage', name:'Rampage', cost:3, desc:'Deal 20 damage', rarity:'rare'},
-    {id:'impervious', name:'Impervious', cost:2, desc:'Gain 15 block', rarity:'rare'},
-    {id:'reaper', name:'Reaper', cost:2, desc:'Deal 8 damage, heal for damage dealt', rarity:'rare'},
-    {id:'deepThinking', name:'Deep Thinking', cost:1, desc:'Draw 3 cards', rarity:'rare'},
-    {id:'execute', name:'Execute', cost:2, desc:'Deal 18 damage', rarity:'rare'},
+    {id:'bash', name:'Bash', cost:2, desc:'Deal 16 damage', rarity:'rare', mainStat:'str'},
+    {id:'rampage', name:'Rampage', cost:3, desc:'Deal 20 damage', rarity:'rare', mainStat:'str'},
+    {id:'impervious', name:'Impervious', cost:2, desc:'Gain 15 block', rarity:'rare', mainStat:'spd'},
+    {id:'reaper', name:'Reaper', cost:2, desc:'Deal 8 damage, heal for damage dealt', rarity:'rare', mainStat:'int'},
+    {id:'deepThinking', name:'Deep Thinking', cost:1, desc:'Draw 3 cards', rarity:'rare', mainStat:'spd'},
+    {id:'execute', name:'Execute', cost:2, desc:'Deal 18 damage', rarity:'rare', mainStat:'dex'},
   ],
   legendary: [
-    {id:'omnislash', name:'Omnislash', cost:3, desc:'Deal 25 damage', rarity:'legendary'},
-    {id:'timeWarp', name:'Time Warp', cost:2, desc:'Draw 4 cards', rarity:'legendary'},
-    {id:'invincible', name:'Invincible', cost:3, desc:'Gain 20 block', rarity:'legendary'},
-    {id:'phoenix', name:'Phoenix', cost:2, desc:'Deal 10 damage, heal 10 HP', rarity:'legendary'},
+    {id:'omnislash', name:'Omnislash', cost:3, desc:'Deal 25 damage', rarity:'legendary', mainStat:'str'},
+    {id:'timeWarp', name:'Time Warp', cost:2, desc:'Draw 4 cards', rarity:'legendary', mainStat:'spd'},
+    {id:'invincible', name:'Invincible', cost:3, desc:'Gain 20 block', rarity:'legendary', mainStat:'spd'},
+    {id:'phoenix', name:'Phoenix', cost:2, desc:'Deal 10 damage, heal 10 HP', rarity:'legendary', mainStat:'int'},
   ]
 };
 
@@ -291,6 +326,30 @@ const ELITE_POKEMON_IDS = [
 /* Create a card with its effect function from a template */
 function createCardWithEffect(template, game) {
   let playFn;
+  const getDamageAmount = (g, owner, base, options = {}) => {
+    const statBonus = template.mainStat ? g.getAttributeValue(template.mainStat) : 0;
+    const attackBonus = owner.baseAttack || 0;
+    let amount = base + statBonus + attackBonus;
+    if(options.isCombo){
+      amount += template.comboBonus || 0;
+    }
+    if(g.getUniqueDamageBonus){
+      amount += g.getUniqueDamageBonus(template, options);
+    }
+    return amount;
+  };
+  const getBlockAmount = (g, base) => {
+    const statBonus = template.mainStat ? g.getAttributeValue(template.mainStat) : 0;
+    return base + statBonus;
+  };
+  const getHealAmount = (g, base) => {
+    const statBonus = template.mainStat ? g.getAttributeValue(template.mainStat) : 0;
+    return base + statBonus;
+  };
+  const getDrawAmount = (g, base) => {
+    const statBonus = template.mainStat ? g.getAttributeValue(template.mainStat) : 0;
+    return base + statBonus;
+  };
   switch(template.id){
     case 'atk': case 'slash': case 'quickStrike': case 'cleave':
       let atkDmg = 6;
@@ -298,133 +357,187 @@ function createCardWithEffect(template, game) {
       else if(template.id === 'quickStrike') atkDmg = 3;
       else if(template.id === 'cleave') atkDmg = 8;
       playFn = (g,owner,target) => {
-        const bonus = owner.baseAttack || 0;
-        const actual = g.applyDamage(target, atkDmg + bonus);
-        g.log(`${owner.name} deals ${actual} damage to ${target.name}.`);
+        if(template.isAoe){
+          const targets = g.getAliveEnemies();
+          if(!targets.length) return;
+          const dmg = getDamageAmount(g, owner, atkDmg, {isAoe:true});
+          targets.forEach((enemy) => {
+            const result = g.applyDamage(enemy, dmg, owner, {isAoe:true});
+            g.log(`${owner.name} hits ${enemy.name} for ${result.actual}${result.crit ? ' (CRIT)' : ''}.`);
+          });
+          return;
+        }
+        if(!target) return;
+        const dmg = getDamageAmount(g, owner, atkDmg);
+        const result = g.applyDamage(target, dmg, owner);
+        g.log(`${owner.name} deals ${result.actual} damage to ${target.name}${result.crit ? ' (CRIT)' : ''}.`);
       };
       break;
     case 'def': case 'shield':
       const defBlock = template.id === 'shield' ? 7 : 6;
       playFn = (g,owner) => {
-        owner.block += defBlock;
-        g.log(`${owner.name} gains ${defBlock} block.`);
+        const block = getBlockAmount(g, defBlock);
+        owner.block += block;
+        g.log(`${owner.name} gains ${block} block.`);
       };
       break;
     case 'heavy':
       playFn = (g,owner,target) => {
-        const bonus = owner.baseAttack || 0;
-        const actual = g.applyDamage(target, 12 + bonus);
-        g.log(`${owner.name} deals ${actual} heavy damage to ${target.name}.`);
+        if(!target) return;
+        const dmg = getDamageAmount(g, owner, 12);
+        const result = g.applyDamage(target, dmg, owner);
+        g.log(`${owner.name} deals ${result.actual} heavy damage to ${target.name}${result.crit ? ' (CRIT)' : ''}.`);
       };
       break;
     case 'heal':
       playFn = (g,owner) => {
-        owner.heal(8);
-        g.log(`${owner.name} heals 8 HP.`);
+        const heal = getHealAmount(g, 8);
+        owner.heal(heal);
+        g.log(`${owner.name} heals ${heal} HP.`);
       };
       break;
     case 'bash':
       playFn = (g,owner,target) => {
-        const bonus = owner.baseAttack || 0;
-        const actual = g.applyDamage(target, 16 + bonus);
-        g.log(`${owner.name} bashes for ${actual} damage!`);
+        if(!target) return;
+        const dmg = getDamageAmount(g, owner, 16);
+        const result = g.applyDamage(target, dmg, owner);
+        g.log(`${owner.name} bashes ${target.name} for ${result.actual} damage${result.crit ? ' (CRIT)' : ''}!`);
       };
       break;
     case 'powerStrike':
       playFn = (g,owner,target) => {
-        const bonus = owner.baseAttack || 0;
-        const actual = g.applyDamage(target, 15 + bonus);
-        g.log(`${owner.name} power strikes for ${actual} damage!`);
+        if(!target) return;
+        const dmg = getDamageAmount(g, owner, 15);
+        const result = g.applyDamage(target, dmg, owner);
+        g.log(`${owner.name} power strikes ${target.name} for ${result.actual} damage${result.crit ? ' (CRIT)' : ''}!`);
       };
       break;
     case 'ironWall':
       playFn = (g,owner) => {
-        owner.block += 12;
-        g.log(`${owner.name} gains 12 block from iron wall.`);
+        const block = getBlockAmount(g, 12);
+        owner.block += block;
+        g.log(`${owner.name} gains ${block} block from iron wall.`);
       };
       break;
     case 'rampage':
       playFn = (g,owner,target) => {
-        const bonus = owner.baseAttack || 0;
-        const actual = g.applyDamage(target, 20 + bonus);
-        g.log(`${owner.name} rampages for ${actual} massive damage!`);
+        if(!target) return;
+        const dmg = getDamageAmount(g, owner, 20);
+        const result = g.applyDamage(target, dmg, owner);
+        g.log(`${owner.name} rampages ${target.name} for ${result.actual} massive damage${result.crit ? ' (CRIT)' : ''}!`);
       };
       break;
     case 'impervious':
       playFn = (g,owner) => {
-        owner.block += 15;
-        g.log(`${owner.name} becomes impervious with 15 block.`);
+        const block = getBlockAmount(g, 15);
+        owner.block += block;
+        g.log(`${owner.name} becomes impervious with ${block} block.`);
       };
       break;
     case 'reaper':
       playFn = (g,owner,target) => {
-        const bonus = owner.baseAttack || 0;
-        const actual = g.applyDamage(target, 8 + bonus);
-        owner.heal(actual);
-        g.log(`${owner.name} reaps ${actual} damage and heals for ${actual}!`);
+        if(!target) return;
+        const dmg = getDamageAmount(g, owner, 8);
+        const result = g.applyDamage(target, dmg, owner);
+        owner.heal(result.actual);
+        g.log(`${owner.name} reaps ${result.actual} damage and heals for ${result.actual}${result.crit ? ' (CRIT)' : ''}!`);
       };
       break;
     case 'execute':
       playFn = (g,owner,target) => {
-        const bonus = owner.baseAttack || 0;
-        const actual = g.applyDamage(target, 18 + bonus);
-        g.log(`${owner.name} executes for ${actual} damage!`);
+        if(!target) return;
+        const dmg = getDamageAmount(g, owner, 18);
+        const result = g.applyDamage(target, dmg, owner);
+        g.log(`${owner.name} executes ${target.name} for ${result.actual} damage${result.crit ? ' (CRIT)' : ''}!`);
       };
       break;
     case 'prepare':
       playFn = (g,owner) => {
-        g.deck.draw(1);
-        g.log(`${owner.name} draws 1 card.`);
+        const drawCount = getDrawAmount(g, 1);
+        g.deck.draw(drawCount);
+        g.log(`${owner.name} draws ${drawCount} card${drawCount !== 1 ? 's' : ''}.`);
         updateUI();
       };
       break;
     case 'tactician':
       playFn = (g,owner) => {
-        g.deck.draw(2);
-        g.log(`${owner.name} draws 2 cards.`);
+        const drawCount = getDrawAmount(g, 2);
+        g.deck.draw(drawCount);
+        g.log(`${owner.name} draws ${drawCount} cards.`);
         updateUI();
       };
       break;
     case 'deepThinking':
       playFn = (g,owner) => {
-        g.deck.draw(3);
-        g.log(`${owner.name} draws 3 cards.`);
+        const drawCount = getDrawAmount(g, 3);
+        g.deck.draw(drawCount);
+        g.log(`${owner.name} draws ${drawCount} cards.`);
         updateUI();
       };
       break;
     case 'timeWarp':
       playFn = (g,owner) => {
-        g.deck.draw(4);
-        g.log(`${owner.name} warps time and draws 4 cards!`);
+        const drawCount = getDrawAmount(g, 4);
+        g.deck.draw(drawCount);
+        g.log(`${owner.name} warps time and draws ${drawCount} cards!`);
         updateUI();
       };
       break;
     case 'omnislash':
       playFn = (g,owner,target) => {
-        const bonus = owner.baseAttack || 0;
-        const actual = g.applyDamage(target, 25 + bonus);
-        g.log(`${owner.name} omnislashes for ${actual} devastating damage!`);
+        if(!target) return;
+        const dmg = getDamageAmount(g, owner, 25);
+        const result = g.applyDamage(target, dmg, owner);
+        g.log(`${owner.name} omnislashes ${target.name} for ${result.actual} devastating damage${result.crit ? ' (CRIT)' : ''}!`);
       };
       break;
     case 'invincible':
       playFn = (g,owner) => {
-        owner.block += 20;
-        g.log(`${owner.name} becomes invincible with 20 block!`);
+        const block = getBlockAmount(g, 20);
+        owner.block += block;
+        g.log(`${owner.name} becomes invincible with ${block} block!`);
       };
       break;
     case 'phoenix':
       playFn = (g,owner,target) => {
-        const bonus = owner.baseAttack || 0;
-        const actual = g.applyDamage(target, 10 + bonus);
-        owner.heal(10);
-        g.log(`${owner.name} channels phoenix power: ${actual} damage and 10 HP healed!`);
+        if(!target) return;
+        const dmg = getDamageAmount(g, owner, 10);
+        const result = g.applyDamage(target, dmg, owner);
+        const heal = getHealAmount(g, 10);
+        owner.heal(heal);
+        g.log(`${owner.name} channels phoenix power: ${result.actual} damage and ${heal} HP healed${result.crit ? ' (CRIT)' : ''}!`);
+      };
+      break;
+    case 'whirlwind':
+      playFn = (g,owner) => {
+        const targets = g.getAliveEnemies();
+        if(!targets.length) return;
+        const dmg = getDamageAmount(g, owner, 6, {isAoe:true});
+        targets.forEach((enemy) => {
+          const result = g.applyDamage(enemy, dmg, owner, {isAoe:true});
+          g.log(`${owner.name} slices ${enemy.name} for ${result.actual}${result.crit ? ' (CRIT)' : ''}.`);
+        });
+      };
+      break;
+    case 'comboFinish':
+      playFn = (g,owner,target) => {
+        if(!target) return;
+        const comboActive = g.isComboReady(template.comboFrom);
+        const dmg = getDamageAmount(g, owner, 6, {isCombo: comboActive});
+        const result = g.applyDamage(target, dmg, owner, {isCombo: comboActive});
+        g.log(`${owner.name} strikes ${target.name} for ${result.actual}${comboActive ? ' with combo power' : ''}${result.crit ? ' (CRIT)' : ''}.`);
       };
       break;
     default:
       console.warn(`Unknown card ID: ${template.id}`);
       playFn = (g,owner) => g.log(`Played ${template.name}.`);
   }
-  return makeCard(template.id, template.name, template.cost, template.desc, playFn, template.rarity);
+  const card = makeCard(template.id, template.name, template.cost, template.desc, playFn, template.rarity);
+  if(template.mainStat) card.mainStat = template.mainStat;
+  if(template.isAoe) card.isAoe = true;
+  if(template.comboFrom) card.comboFrom = template.comboFrom;
+  if(template.comboBonus) card.comboBonus = template.comboBonus;
+  return card;
 }
 
 /* Select a random card pool based on rarity probabilities */

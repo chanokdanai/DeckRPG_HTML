@@ -3,47 +3,23 @@ Game.prototype.startCombat = function(type){
   $("combat").classList.remove('hidden');
   $("nextRoomBtn").disabled = true;
   
-  let baseHp, baseAtk, enemyName;
-  if(type === 'boss'){
-    baseHp = 80 + rand(20);
-    baseAtk = 12 + rand(5);
-    enemyName = 'Boss Dragon';
-  } else if(type === 'elite'){
-    baseHp = 36 + rand(10);
-    baseAtk = 8 + rand(4);
-    enemyName = 'Elite Warrior';
-  } else {
-    baseHp = 20 + rand(12);
-    baseAtk = 5 + rand(3);
-    enemyName = 'Goblin';
+  const enemyCount = type === 'boss' ? 1 : (type === 'elite' ? 3 : 2);
+  this.enemies = [];
+  this.currentCombatType = type;
+  for(let i = 0; i < enemyCount; i++){
+    const enemy = this.createEnemy(type, i, enemyCount);
+    this.enemies.push(enemy);
   }
-  
-  this.enemy = new Entity(enemyName, baseHp, baseHp);
-  this.enemy.atk = baseAtk;
-  
-  // Set Pokemon sprites using PokeAPI
+  this.selectedEnemyIndex = 0;
+  this.enemy = this.enemies[0] || null;
+  this.lastCardId = null;
+
   // Player sprite (selected class or fallback to Pikachu - #25)
   const playerSpriteId = this.playerSpriteId || 25;
   const playerSprite = $("playerSprite");
   playerSprite.style.backgroundImage = `url(https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${playerSpriteId}.png)`;
-  
-  // Enemy sprite - random Pokemon based on enemy type
-  let enemySpriteId;
-  if(type === 'boss'){
-    // Boss uses legendary dragons
-    const bossPokemon = [6, 149, 150, 383, 384, 483, 484, 487, 643, 644];
-    enemySpriteId = bossPokemon[rand(bossPokemon.length)];
-  } else if(type === 'elite'){
-    // Elite enemies use legendary/mythical Pokemon
-    enemySpriteId = ELITE_POKEMON_IDS[rand(ELITE_POKEMON_IDS.length)];
-  } else {
-    // Normal enemies use common Pokemon from curated list
-    enemySpriteId = COMMON_POKEMON_IDS[rand(COMMON_POKEMON_IDS.length)];
-  }
-  const enemySprite = $("enemySprite");
-  enemySprite.style.backgroundImage = `url(https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${enemySpriteId}.png)`;
-  
-  this.log(`Encountered ${this.enemy.name} (HP ${this.enemy.hp}, ATK ${this.enemy.atk})`);
+
+  this.log(`Encountered ${this.enemies.length} ${type} ${this.enemies.length !== 1 ? 'enemies' : 'enemy'}.`);
   // reset block/energy and draw
   this.player.block = 0;
   this.player.energy = this.player.maxEnergy || 3;
@@ -51,6 +27,83 @@ Game.prototype.startCombat = function(type){
   // draw initial hand
   this.drawToFull();
   updateUI();
+};
+
+Game.prototype.createEnemy = function(type, index, total){
+  let baseHp, baseAtk, enemyName;
+  if(type === 'boss'){
+    baseHp = 80 + rand(20);
+    baseAtk = 12 + rand(5);
+    enemyName = 'Boss Dragon';
+  } else if(type === 'elite'){
+    baseHp = 30 + rand(12);
+    baseAtk = 7 + rand(4);
+    enemyName = 'Elite Warrior';
+  } else {
+    baseHp = 18 + rand(12);
+    baseAtk = 5 + rand(3);
+    enemyName = 'Goblin';
+  }
+
+  const enemy = new Entity(enemyName, baseHp, baseHp);
+  enemy.atk = baseAtk;
+  let enemySpriteId;
+  if(type === 'boss'){
+    const bossPokemon = [6, 149, 150, 383, 384, 483, 484, 487, 643, 644];
+    enemySpriteId = bossPokemon[rand(bossPokemon.length)];
+  } else if(type === 'elite'){
+    enemySpriteId = ELITE_POKEMON_IDS[rand(ELITE_POKEMON_IDS.length)];
+  } else {
+    enemySpriteId = COMMON_POKEMON_IDS[rand(COMMON_POKEMON_IDS.length)];
+  }
+  enemy.spriteId = enemySpriteId;
+  if(total > 1){
+    enemy.name = `${enemy.name} ${index + 1}`;
+  }
+  return enemy;
+};
+
+Game.prototype.getAliveEnemies = function(){
+  return this.enemies.filter(enemy => enemy.hp > 0);
+};
+
+Game.prototype.getSelectedEnemy = function(){
+  if(!this.enemies.length) return null;
+  let selected = this.enemies[this.selectedEnemyIndex];
+  if(!selected || selected.hp <= 0){
+    const aliveIndex = this.enemies.findIndex(enemy => enemy.hp > 0);
+    if(aliveIndex === -1) return null;
+    this.selectedEnemyIndex = aliveIndex;
+    selected = this.enemies[aliveIndex];
+  }
+  this.enemy = selected;
+  return selected;
+};
+
+Game.prototype.selectEnemy = function(index){
+  if(!this.enemies[index] || this.enemies[index].hp <= 0) return;
+  this.selectedEnemyIndex = index;
+  this.enemy = this.enemies[index];
+  updateUI();
+};
+
+Game.prototype.isComboReady = function(comboFrom){
+  if(!comboFrom || !comboFrom.length) return false;
+  return comboFrom.includes(this.lastCardId);
+};
+
+Game.prototype.getUniqueDamageBonus = function(cardTemplate, options = {}){
+  let bonus = 0;
+  Object.values(this.inventory).forEach((item) => {
+    if(!item || item.rarity !== 'unique' || !item.uniqueEffect) return;
+    if(item.uniqueEffect.type === 'aoe_bonus' && options.isAoe){
+      bonus += item.uniqueEffect.bonus || 0;
+    }
+    if(item.uniqueEffect.type === 'combo_bonus' && options.isCombo){
+      bonus += item.uniqueEffect.bonus || 0;
+    }
+  });
+  return bonus;
 };
 
 Game.prototype.drawToFull = function(){
@@ -73,38 +126,63 @@ Game.prototype.playCardFromHand = function(index){
   this.player.energy -= card.cost;
   // play effect; provide references: game, owner, target
   // some cards target enemy, some affect owner
+  const target = this.getSelectedEnemy();
   try {
-    card.play(this, this.player, this.enemy);
+    card.play(this, this.player, target);
   } catch(e){
     // fallback
     this.log(`Played ${card.name}.`);
   }
   this.deck.playCard(index);
+  this.lastCardId = card.id;
   // check enemy death
-  if(this.enemy && this.enemy.hp <= 0){
-    this.log(`${this.enemy.name} defeated!`);
+  const aliveEnemies = this.getAliveEnemies();
+  if(aliveEnemies.length === 0){
+    this.log(`All enemies defeated!`);
     this.endCombat(true);
     return;
   }
+  this.getSelectedEnemy();
   updateUI();
 };
 
-Game.prototype.applyDamage = function(target, amount){
-  const actual = target.takeDamage(amount);
-  if(actual > 0){
-    if(target === this.enemy) {
-      this.showDamageNumber("enemy", actual);
-    } else if(target === this.player) {
-      this.showDamageNumber("player", actual);
+Game.prototype.applyDamage = function(target, amount, source, options = {}){
+  if(!target) return {actual:0, crit:false};
+  let finalAmount = amount;
+  let crit = false;
+  if(source === this.player){
+    const critRate = this.player.subAttributes?.critRate || 0;
+    const critDamage = this.player.subAttributes?.critDamage || 1.5;
+    if(Math.random() < critRate){
+      crit = true;
+      finalAmount = Math.round(finalAmount * critDamage);
     }
   }
-  return actual;
+  if(target === this.player){
+    const resist = this.player.subAttributes?.resistance || 0;
+    finalAmount = Math.round(finalAmount * (1 - resist));
+  }
+  const actual = target.takeDamage(finalAmount);
+  if(actual > 0){
+    if(target === this.player) {
+      this.showDamageNumber("player", actual);
+    } else {
+      const index = this.enemies.indexOf(target);
+      this.showDamageNumber("enemy", actual, index);
+    }
+  }
+  return {actual, crit};
 };
 
 const DAMAGE_FLOAT_TIMEOUT_MS = 1000;
 
-Game.prototype.showDamageNumber = function(targetType, amount){
-  const targetEl = $(targetType === "player" ? "playerArea" : "enemyArea");
+Game.prototype.showDamageNumber = function(targetType, amount, enemyIndex){
+  let targetEl;
+  if(targetType === "player"){
+    targetEl = $("playerArea");
+  } else {
+    targetEl = document.querySelector(`.enemy-card[data-enemy-index="${enemyIndex}"]`);
+  }
   if(!targetEl) return;
   const floatEl = document.createElement('div');
   floatEl.className = 'damage-float';
@@ -120,13 +198,16 @@ Game.prototype.showDamageNumber = function(targetType, amount){
 };
 
 Game.prototype.enemyTurn = function(){
-  if(!this.enemy) return;
-  const atk = this.enemy.atk + rand(3);
-  const dmg = this.applyDamage(this.player, atk);
-  this.log(`${this.enemy.name} attacks for ${atk} (${dmg} damage after block).`);
-  if(this.player.hp <= 0){
-    this.showGameOver();
-    return;
+  const aliveEnemies = this.getAliveEnemies();
+  if(!aliveEnemies.length) return;
+  for(const enemy of aliveEnemies){
+    const atk = enemy.atk + rand(3);
+    const result = this.applyDamage(this.player, atk, enemy);
+    this.log(`${enemy.name} attacks for ${atk} (${result.actual} damage after block).`);
+    if(this.player.hp <= 0){
+      this.showGameOver();
+      return;
+    }
   }
   updateUI();
 };
@@ -135,7 +216,7 @@ Game.prototype.endTurn = function(){
   // enemy acts
   this.enemyTurn();
   // refresh energy and draw a new hand
-  if(this.enemy && this.enemy.hp > 0){
+  if(this.getAliveEnemies().length > 0){
     this.player.energy = this.player.maxEnergy || 3;
     // discard hand after turn
     this.deck.discard.push(...this.deck.hand);
@@ -147,12 +228,17 @@ Game.prototype.endTurn = function(){
 
 Game.prototype.endCombat = function(victory){
   if(victory){
+    const enemyCount = this.enemies.length || 1;
     const loot = 5 + rand(8);
     this.gold += loot;
     this.log(`Loot: +${loot} gold.`);
     updateUI();
     this.roomsCleared++;
-    this.enemiesDefeated++;
+    this.enemiesDefeated += enemyCount;
+    const expBase = this.currentCombatType === 'boss' ? 30 : (this.currentCombatType === 'elite' ? 18 : 12);
+    const expGain = expBase * enemyCount;
+    this.gainExperience(expGain);
+    this.log(`Gained ${expGain} EXP.`);
     
     // Generate item drops based on enemy type
     const enemyType = this.currentNode ? this.currentNode.type : 'combat';
@@ -169,6 +255,7 @@ Game.prototype.endCombat = function(victory){
       this.log(`${droppedItems.length} item(s) dropped!`);
       // Clean up combat first
       this.enemy = null;
+      this.enemies = [];
       $("combat").classList.add('hidden');
       this.deck.discard.push(...this.deck.hand);
       this.deck.hand = [];
@@ -186,6 +273,8 @@ Game.prototype.endCombat = function(victory){
   }
   // clean up
   this.enemy = null;
+  this.enemies = [];
+  this.currentCombatType = null;
   $("combat").classList.add('hidden');
   $("nextRoomBtn").disabled = false;
   $("playerArea").style.display = '';
