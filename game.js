@@ -364,6 +364,23 @@ class Game {
     const baseAtk = type==='elite' ? 8 + rand(4) : 5 + rand(3);
     this.enemy = new Entity(type==='elite' ? 'Elite' : 'Goblin', baseHp, baseHp);
     this.enemy.atk = baseAtk;
+    
+    // Set Pokemon sprites using PokeAPI
+    // Player sprite (Pikachu - #25)
+    const playerSpriteId = 25;
+    $("playerSprite").style.backgroundImage = `url(https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${playerSpriteId}.png)`;
+    
+    // Enemy sprite - random Pokemon based on enemy type
+    let enemySpriteId;
+    if(type === 'elite'){
+      // Elite enemies use stronger Pokemon (150-200 range)
+      enemySpriteId = 150 + rand(51);
+    } else {
+      // Normal enemies use weaker Pokemon (1-100 range)
+      enemySpriteId = 1 + rand(100);
+    }
+    $("enemySprite").style.backgroundImage = `url(https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${enemySpriteId}.png)`;
+    
     this.log(`Encountered ${this.enemy.name} (HP ${this.enemy.hp}, ATK ${this.enemy.atk})`);
     // reset block/energy and draw
     this.player.block = 0;

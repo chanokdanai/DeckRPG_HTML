@@ -20,27 +20,54 @@ main{display:grid;grid-template-columns:320px 1fr;gap:16px;padding:18px}
 .primary{background:var(--accent);border:none;padding:8px 12px;border-radius:6px;color:#081426;font-weight:700;cursor:pointer}
 .hidden{display:none !important}
 
-#enemyArea, #playerArea{margin-bottom:12px}
-.hpbar{background:#06202b;border-radius:6px;height:18px;overflow:hidden;margin:6px 0}
-.hp{height:100%;background:linear-gradient(90deg,var(--hp-green),#18b39b)}
+#enemyArea, #playerArea{margin-bottom:12px;display:flex;flex-direction:column;align-items:center}
+.sprite{width:96px;height:96px;background-size:contain;background-repeat:no-repeat;background-position:center;margin:8px 0;image-rendering:pixelated}
+.hpbar{background:#06202b;border-radius:6px;height:18px;overflow:hidden;margin:6px 0;width:100%}
+.hp{height:100%;background:linear-gradient(90deg,var(--hp-green),#18b39b);transition:width 0.3s ease}
 #enemyStats,#playerStats{color:var(--muted);font-size:0.95rem}
 
 #handArea{background:transparent;padding:6px;border-radius:6px}
 #hand{display:flex;gap:8px;flex-wrap:wrap}
 
 .card{
-  min-width:120px;padding:8px;border-radius:6px;background:var(--card);box-shadow:0 2px 8px rgba(0,0,0,0.5);
-  cursor:pointer;border:1px solid rgba(255,255,255,0.03);transition:transform 0.2s,box-shadow 0.2s
+  min-width:140px;max-width:160px;padding:12px;border-radius:12px;background:var(--card);
+  box-shadow:0 4px 12px rgba(0,0,0,0.6);cursor:pointer;
+  border:2px solid rgba(255,255,255,0.1);
+  transition:all 0.3s cubic-bezier(0.4,0,0.2,1);
+  position:relative;overflow:hidden
 }
-.card:hover{transform:translateY(-4px);box-shadow:0 4px 12px rgba(0,0,0,0.7)}
-.card.common{border-color:rgba(155,155,155,0.3)}
-.card.uncommon{border-color:rgba(82,196,26,0.5)}
-.card.rare{border-color:rgba(24,144,255,0.6)}
-.card.legendary{border-color:rgba(255,165,0,0.8);background:linear-gradient(135deg,#102033 0%,#1a2540 100%)}
-#cardRewards,#shopCards{display:flex;gap:12px;flex-wrap:wrap;margin:12px 0}
-.card .title{font-weight:700;color:#ffffff}
-.card .cost{float:right;background:#0b2a44;padding:2px 6px;border-radius:4px;font-weight:700}
-.small{font-size:0.85rem;color:var(--muted)}
+.card::before{
+  content:'';position:absolute;top:0;left:0;right:0;bottom:0;
+  background:linear-gradient(135deg,rgba(255,255,255,0.1) 0%,transparent 50%);
+  opacity:0;transition:opacity 0.3s ease
+}
+.card:hover{
+  transform:translateY(-8px) scale(1.05);
+  box-shadow:0 12px 24px rgba(0,0,0,0.8),0 0 20px rgba(255,204,51,0.3);
+  border-color:rgba(255,204,51,0.6)
+}
+.card:hover::before{opacity:1}
+.card.common{border-color:rgba(155,155,155,0.4)}
+.card.uncommon{border-color:rgba(82,196,26,0.6)}
+.card.rare{border-color:rgba(24,144,255,0.7)}
+.card.legendary{
+  border-color:rgba(255,165,0,0.9);
+  background:linear-gradient(135deg,#102033 0%,#1a2540 50%,#1f2d4a 100%);
+  box-shadow:0 4px 12px rgba(0,0,0,0.6),0 0 15px rgba(255,165,0,0.3)
+}
+.card.legendary:hover{
+  box-shadow:0 12px 24px rgba(0,0,0,0.8),0 0 30px rgba(255,165,0,0.6);
+  border-color:rgba(255,165,0,1)
+}
+#cardRewards,#shopCards{display:flex;gap:16px;flex-wrap:wrap;margin:12px 0;justify-content:center}
+.card .title{font-weight:700;color:#ffffff;font-size:1.05rem;text-shadow:0 1px 2px rgba(0,0,0,0.5)}
+.card .cost{
+  float:right;background:linear-gradient(135deg,#0b2a44,#1a3a5a);
+  padding:4px 8px;border-radius:50%;font-weight:700;font-size:1.1rem;
+  min-width:28px;text-align:center;box-shadow:0 2px 4px rgba(0,0,0,0.4);
+  border:1px solid rgba(255,255,255,0.2)
+}
+.small{font-size:0.85rem;color:var(--muted);margin-top:6px;line-height:1.4}
 
 #controls{display:flex;gap:10px;align-items:center;margin-top:8px}
 #controls button{padding:8px 10px;border-radius:6px;border:none;background:#233447;color:#e6eef8;cursor:pointer}
