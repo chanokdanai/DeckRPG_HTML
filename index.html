@@ -16,13 +16,33 @@
   </header>
 
   <main>
+    <section id="mapView" class="hidden">
+      <h2>Choose Your Path</h2>
+      <div id="mapContainer">
+        <svg id="mapSvg" width="800" height="600"></svg>
+      </div>
+    </section>
+
     <section id="dungeon">
       <div id="roomInfo"></div>
       <button id="nextRoomBtn" class="primary">Start Run</button>
     </section>
 
+    <section id="reward" class="hidden">
+      <h2>Choose a Card Reward</h2>
+      <div id="cardRewards"></div>
+      <button id="skipReward">Skip Reward</button>
+    </section>
+
+    <section id="shop" class="hidden">
+      <h2>Treasure Shop</h2>
+      <div id="shopCards"></div>
+      <button id="leaveShop" class="primary">Leave Shop</button>
+    </section>
+
     <section id="combat" class="hidden">
       <div id="enemyArea">
+        <div id="enemySprite" class="sprite"></div>
         <h2 id="enemyName"></h2>
         <div class="hpbar">
           <div id="enemyHp" class="hp"></div>
@@ -31,6 +51,7 @@
       </div>
 
       <div id="playerArea">
+        <div id="playerSprite" class="sprite"></div>
         <div class="hpbar">
           <div id="playerHp" class="hp"></div>
         </div>
@@ -60,8 +81,16 @@
     </section>
   </main>
 
+  <div id="gameOver" class="modal hidden">
+    <div class="modal-content">
+      <h2 id="endTitle">Game Over</h2>
+      <div id="endStats"></div>
+      <button id="restartBtn" class="primary">Start New Run</button>
+    </div>
+  </div>
+
   <footer>
-    <small>Prototype: simple deck, random dungeon, turn-based combats. Cards: Attack / Defend / Heal.</small>
+    <small>Deck Building Roguelike: Build your deck, defeat enemies, and conquer the dungeon!</small>
   </footer>
 
   <script src="game.js"></script>
