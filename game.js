@@ -654,7 +654,7 @@ class Game {
           g.addEventListener('click', () => this.selectNode(node));
           
           // Tooltip handlers
-          g.addEventListener('mouseenter', (e) => this.showMapTooltip(node, x, y));
+          g.addEventListener('mouseenter', () => this.showMapTooltip(node, x, y));
           g.addEventListener('mouseleave', () => this.hideMapTooltip());
         }
         
