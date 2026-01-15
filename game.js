@@ -734,12 +734,6 @@ class Game {
     // Return to map for next choice
     this.showMap();
   }
-    this.enemy = null;
-    $("nextRoomBtn").disabled = false;
-    this.deck.discard.push(...this.deck.hand);
-    this.deck.hand = [];
-    updateUI();
-  }
 
   showShop(){
     $("shop").classList.remove('hidden');
