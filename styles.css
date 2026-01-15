@@ -111,8 +111,8 @@ main{display:grid;grid-template-columns:320px 1fr 280px;gap:16px;padding:18px}
 .map-node:hover:not(.locked){
   filter:drop-shadow(0 0 12px #ffcc33)
 }
-.map-path{stroke:#2a4a6a;stroke-width:3;fill:none;opacity:0.5}
-.map-path.active{stroke:#4a7a9a;opacity:1}
+.map-path{stroke:#2a4a6a;stroke-width:2;fill:none;opacity:0.4}
+.map-path.active{stroke:#4a7a9a;opacity:0.7}
 .node-icon{font-size:24px;text-anchor:middle;dominant-baseline:middle;user-select:none}
 .node-circle{fill:#1a3a5a;stroke:#4a7a9a;stroke-width:2}
 .node-circle.combat{fill:#4a2020;stroke:#8a4040}

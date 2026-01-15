@@ -671,11 +671,14 @@ class Game {
             const x2 = (targetNode.position + 1) * (width / (targetFloor.length + 1));
             const y2 = (targetNode.floor + 1) * floorHeight;
             
-            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-            const d = `M ${x1} ${y1} Q ${(x1+x2)/2} ${(y1+y2)/2} ${x2} ${y2}`;
-            path.setAttribute('d', d);
-            path.setAttribute('class', `map-path ${!targetNode.locked ? 'active' : ''}`);
-            svg.appendChild(path);
+            // Use simple straight lines instead of curves
+            const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            line.setAttribute('x1', x1);
+            line.setAttribute('y1', y1);
+            line.setAttribute('x2', x2);
+            line.setAttribute('y2', y2);
+            line.setAttribute('class', `map-path ${!targetNode.locked ? 'active' : ''}`);
+            svg.appendChild(line);
           }
         });
       });
