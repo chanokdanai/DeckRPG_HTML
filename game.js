@@ -93,6 +93,9 @@ class Game {
     this.roomCount = 8 + rand(5);
     this.currentRoom = -1;
     this.gold = 0;
+    this.startTime = Date.now();
+    this.roomsCleared = 0;
+    this.enemiesDefeated = 0;
     this.setupUI();
     this.resetPlayer();
     this.makeDeck();
@@ -106,6 +109,7 @@ class Game {
     $("drawBtn").addEventListener('click', ()=> { this.drawToFull(); updateUI(); });
     $("skipReward").addEventListener('click', ()=> this.skipReward());
     $("leaveShop").addEventListener('click', ()=> this.leaveShop());
+    $("restartBtn").addEventListener('click', ()=> this.restart());
   }
 
   resetPlayer(){
@@ -225,13 +229,15 @@ class Game {
       // start run
       this.generateDungeon();
       this.currentRoom = -1;
+      this.startTime = Date.now();
+      this.roomsCleared = 0;
+      this.enemiesDefeated = 0;
       $("nextRoomBtn").textContent = 'Enter Next Room';
       $("nextRoomBtn").classList.add('primary');
     }
     this.currentRoom++;
     if(this.currentRoom >= this.roomCount){
-      this.log("You reached the end of the dungeon. Victory!");
-      $("nextRoomBtn").disabled = true;
+      this.showVictory();
       return;
     }
     $("roomIndex").textContent = this.currentRoom + 1;
@@ -253,6 +259,7 @@ class Game {
     const heal = Math.floor(this.player.maxHp * 0.2);
     this.player.heal(heal);
     this.log(`Rest: healed ${heal} HP.`);
+    this.roomsCleared++;
     updateUI();
   }
 
@@ -320,10 +327,7 @@ class Game {
     const dmg = this.player.takeDamage(atk);
     this.log(`${this.enemy.name} attacks for ${atk} (${dmg} damage after block).`);
     if(this.player.hp <= 0){
-      this.log("You died. Run over.");
-      $("endTurn").disabled = true;
-      $("nextRoomBtn").disabled = true;
-      updateUI();
+      this.showGameOver();
       return;
     }
     updateUI();
@@ -348,6 +352,8 @@ class Game {
       const loot = 5 + rand(8);
       this.gold += loot;
       this.log(`Loot: +${loot} gold.`);
+      this.roomsCleared++;
+      this.enemiesDefeated++;
       // Show card rewards
       this.showCardRewards();
       return; // Don't proceed to next room yet
@@ -624,8 +630,51 @@ class Game {
   leaveShop(){
     $("shop").classList.add('hidden');
     $("nextRoomBtn").disabled = false;
+    this.roomsCleared++;
     this.log('Left the shop.');
     updateUI();
+  }
+
+  showGameOver(){
+    const duration = Math.floor((Date.now() - this.startTime) / 1000);
+    const minutes = Math.floor(duration / 60);
+    const seconds = duration % 60;
+    
+    $("endTitle").textContent = "Defeated!";
+    $("endStats").innerHTML = `
+      <div>Rooms Cleared: ${this.roomsCleared}/${this.roomCount}</div>
+      <div>Enemies Defeated: ${this.enemiesDefeated}</div>
+      <div>Gold Collected: ${this.gold}</div>
+      <div>Final Deck Size: ${this.deck.drawPile.length + this.deck.discard.length + this.deck.hand.length}</div>
+      <div>Time: ${minutes}m ${seconds}s</div>
+    `;
+    $("gameOver").classList.remove('hidden');
+    $("endTurn").disabled = true;
+    $("nextRoomBtn").disabled = true;
+  }
+
+  showVictory(){
+    const duration = Math.floor((Date.now() - this.startTime) / 1000);
+    const minutes = Math.floor(duration / 60);
+    const seconds = duration % 60;
+    
+    $("endTitle").textContent = "Victory!";
+    $("endTitle").style.color = '#3ad29f';
+    $("endStats").innerHTML = `
+      <div>🎉 You conquered the dungeon! 🎉</div>
+      <div>Rooms Cleared: ${this.roomCount}/${this.roomCount}</div>
+      <div>Enemies Defeated: ${this.enemiesDefeated}</div>
+      <div>Gold Collected: ${this.gold}</div>
+      <div>Final Deck Size: ${this.deck.drawPile.length + this.deck.discard.length + this.deck.hand.length}</div>
+      <div>Time: ${minutes}m ${seconds}s</div>
+    `;
+    $("gameOver").classList.remove('hidden');
+    $("nextRoomBtn").disabled = true;
+    this.log("You reached the end of the dungeon. Victory!");
+  }
+
+  restart(){
+    location.reload();
   }
 }
 

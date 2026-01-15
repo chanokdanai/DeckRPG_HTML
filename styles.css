@@ -18,7 +18,7 @@ main{display:grid;grid-template-columns:320px 1fr;gap:16px;padding:18px}
 #dungeon{display:flex;flex-direction:column;gap:10px;align-items:flex-start}
 #roomInfo{color:var(--muted)}
 .primary{background:var(--accent);border:none;padding:8px 12px;border-radius:6px;color:#081426;font-weight:700;cursor:pointer}
-.hidden{display:none}
+.hidden{display:none !important}
 
 #enemyArea, #playerArea{margin-bottom:12px}
 .hpbar{background:#06202b;border-radius:6px;height:18px;overflow:hidden;margin:6px 0}
@@ -47,6 +47,11 @@ main{display:grid;grid-template-columns:320px 1fr;gap:16px;padding:18px}
 #deckInfo{display:flex;gap:12px;color:var(--muted);margin-top:12px}
 
 #log{max-height:240px;overflow:auto;padding:6px;background:#071826;border-radius:6px;font-size:0.9rem;color:var(--muted)}
+.modal{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);display:flex;align-items:center;justify-content:center;z-index:1000}
+.modal-content{background:var(--panel);padding:32px;border-radius:12px;max-width:500px;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,0.5)}
+.modal-content h2{margin:0 0 16px 0;color:var(--accent)}
+#endStats{margin:20px 0;color:var(--muted);font-size:1.1rem;line-height:1.6}
+#endStats div{margin:8px 0}
 footer{padding:12px 18px;color:var(--muted);font-size:0.85rem}
 @media(max-width:900px){
   main{grid-template-columns:1fr;padding:12px}
