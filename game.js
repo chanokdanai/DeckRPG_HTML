@@ -263,7 +263,7 @@ class Entity {
 class Game {
   constructor(){
     this.floors = 15; // Total floors including boss
-    this.currentFloor = 0;
+    this.currentFloor = -1;
     this.currentNode = null;
     this.mapNodes = [];
     this.gold = 0;
@@ -512,10 +512,10 @@ class Game {
   }
 
   nextRoom(){
-    if(this.currentFloor === -1 || this.currentFloor === 0 && !this.mapNodes.length){
+    if(this.currentFloor === -1 || !this.mapNodes.length){
       // Start run - generate map
       this.generateMap();
-      this.currentFloor = 0;
+      this.currentFloor = -1;
       this.startTime = Date.now();
       this.roomsCleared = 0;
       this.enemiesDefeated = 0;
