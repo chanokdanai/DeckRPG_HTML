@@ -142,6 +142,7 @@ Game.prototype.updateInventoryUI = function() {
     bonusStatsEl.classList.add('hidden');
   }
   this.updateEquipmentSlots();
+  this.updateBagUI();
 };
 
 Game.prototype.updateEquipmentSlots = function() {
@@ -186,6 +187,59 @@ Game.prototype.updateEquipmentSlots = function() {
     wrapper.appendChild(content);
     equipmentSlotsEl.appendChild(wrapper);
   });
+};
+
+Game.prototype.updateBagUI = function() {
+  const grid = $("bagGrid");
+  if(!grid) return;
+  grid.innerHTML = '';
+  this.bag.forEach((item, index) => {
+    const slotEl = document.createElement('div');
+    slotEl.className = `inv-slot bag-slot ${item ? item.rarity : 'empty'}`;
+
+    if(item) {
+      slotEl.innerHTML = `
+        <div class="item-icon">
+          <div class="item-icon-image">${this.getItemEmoji(item.type)}</div>
+          <div class="item-icon-name">${item.name}</div>
+        </div>
+        <div class="item-rarity-border"></div>
+      `;
+      slotEl.onclick = () => this.equipItemFromBag(index);
+      slotEl.onmouseenter = (e) => this.showItemTooltip(e, item);
+      slotEl.onmouseleave = () => this.hideItemTooltip();
+    } else {
+      slotEl.innerHTML = `<div class="slot-icon">+</div>`;
+    }
+    grid.appendChild(slotEl);
+  });
+};
+
+Game.prototype.addItemToBag = function(item, silent = false) {
+  const emptyIndex = this.bag.findIndex(slot => slot === null);
+  if(emptyIndex === -1) {
+    if(!silent) this.log('Bag is full.');
+    return false;
+  }
+  this.bag[emptyIndex] = item;
+  if(!silent) {
+    this.log(`Stored ${item.name} in bag.`);
+  }
+  this.updateInventoryUI();
+  return true;
+};
+
+Game.prototype.canEquipItem = function(item) {
+  if(!item) return false;
+  if(item.type === 'weapon' || item.type === 'ring') return true;
+  return Object.prototype.hasOwnProperty.call(this.inventory, item.type);
+};
+
+Game.prototype.equipItemFromBag = function(index) {
+  const item = this.bag[index];
+  if(!item) return;
+  this.bag[index] = null;
+  this.equipItem(item);
 };
 
 Game.prototype.getSlotEmoji = function(slot) {
@@ -282,10 +336,15 @@ Game.prototype.formatItemStats = function(stats) {
 Game.prototype.unequipItem = function(slot) {
   const item = this.inventory[slot];
   if(!item) return;
-  
+
+  if(!this.addItemToBag(item, true)) {
+    this.log('Bag is full. Cannot unequip.');
+    return;
+  }
+
   this.unapplyItemStats(item);
   this.inventory[slot] = null;
-  this.log(`Unequipped ${item.name}.`);
+  this.log(`Moved ${item.name} to bag.`);
   this.updateInventoryUI();
   updateUI();
 };
@@ -306,10 +365,24 @@ Game.prototype.showLootDrop = function(lootItems) {
       <div class="item-rarity ${item.rarity}">${item.rarity}</div>
     `;
     div.addEventListener('click', () => {
-      this.equipItem(item);
+      const stored = this.addItemToBag(item, true);
+      if(stored) {
+        this.log(`Stored ${item.name} in bag.`);
+        const status = document.createElement('div');
+        status.className = 'loot-status stored';
+        status.textContent = '✓ Stored';
+        div.appendChild(status);
+      } else if(this.canEquipItem(item)) {
+        this.equipItem(item);
+        const status = document.createElement('div');
+        status.className = 'loot-status equipped';
+        status.textContent = '✓ Equipped';
+        div.appendChild(status);
+      } else {
+        this.log('Bag is full.');
+      }
       div.style.opacity = '0.5';
       div.style.pointerEvents = 'none';
-      div.innerHTML += '<div style="margin-top:8px;color:#3ad29f;font-weight:700">✓ Equipped</div>';
     });
     lootEl.appendChild(div);
   });

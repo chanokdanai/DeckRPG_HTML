@@ -2,6 +2,7 @@
 // Save these files together and open index.html
 
 /* Game State */
+const BAG_SIZE = 12;
 class Deck {
   constructor(cards){
     this.drawPile = [...cards];
@@ -75,6 +76,7 @@ class Game {
       belt: null,
       boots: null
     };
+    this.bag = Array(BAG_SIZE).fill(null);
     this.startTime = Date.now();
     this.roomsCleared = 0;
     this.enemiesDefeated = 0;
@@ -100,7 +102,62 @@ class Game {
         this.closeInventoryModal();
       }
     });
+    const logMinimize = $("logMinimize");
+    if(logMinimize){
+      logMinimize.addEventListener('click', () => {
+        const logArea = $("logArea");
+        logArea.classList.toggle('minimized');
+        logMinimize.setAttribute('aria-pressed', logArea.classList.contains('minimized'));
+      });
+    }
+    this.setupWindowDrag("logArea", "logHeader");
+    if(this.hotkeyHandler){
+      document.removeEventListener('keydown', this.hotkeyHandler);
+    }
+    this.hotkeyHandler = (event) => {
+      const keyIndex = Number(event.key);
+      if(!Number.isInteger(keyIndex) || keyIndex < 1 || keyIndex > 9) return;
+      if($("combat").classList.contains('hidden') || !this.enemy) return;
+      const index = keyIndex - 1;
+      if(index >= this.deck.hand.length) return;
+      this.playCardFromHand(index);
+    };
+    document.addEventListener('keydown', this.hotkeyHandler);
     this.updateInventoryUI();
+  }
+
+  setupWindowDrag(windowId, handleId){
+    const windowEl = $(windowId);
+    const handle = $(handleId);
+    if(!windowEl || !handle) return;
+    let dragging = false;
+    let offsetX = 0;
+    let offsetY = 0;
+
+    handle.addEventListener('pointerdown', (event) => {
+      if(event.target.closest('button')) return;
+      dragging = true;
+      const rect = windowEl.getBoundingClientRect();
+      offsetX = event.clientX - rect.left;
+      offsetY = event.clientY - rect.top;
+      windowEl.style.left = rect.left + 'px';
+      windowEl.style.top = rect.top + 'px';
+      windowEl.style.right = 'auto';
+      windowEl.style.bottom = 'auto';
+      handle.setPointerCapture(event.pointerId);
+    });
+
+    handle.addEventListener('pointermove', (event) => {
+      if(!dragging) return;
+      windowEl.style.left = (event.clientX - offsetX) + 'px';
+      windowEl.style.top = (event.clientY - offsetY) + 'px';
+    });
+
+    const stopDrag = () => {
+      dragging = false;
+    };
+    handle.addEventListener('pointerup', stopDrag);
+    handle.addEventListener('pointercancel', stopDrag);
   }
 
   resetPlayer(){
@@ -132,7 +189,15 @@ class Game {
     el.prepend(p);
   }
 
+  cleanup(){
+    if(this.hotkeyHandler){
+      document.removeEventListener('keydown', this.hotkeyHandler);
+      this.hotkeyHandler = null;
+    }
+  }
+
   restart(){
+    this.cleanup();
     location.reload();
   }
 }

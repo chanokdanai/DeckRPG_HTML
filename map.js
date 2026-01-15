@@ -223,6 +223,9 @@ Game.prototype.enterRoom = function(type){
 };
 
 Game.prototype.showMap = function(){
+  if(!this.mapNodes.length){
+    this.generateMap();
+  }
   $("mapView").classList.remove('hidden');
   $("dungeon").classList.add('hidden');
   $("combat").classList.add('hidden');

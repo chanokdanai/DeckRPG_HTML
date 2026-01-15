@@ -42,10 +42,14 @@
       <button id="nextRoomBtn" class="primary">Start Run</button>
     </section>
 
-    <section id="reward" class="hidden">
-      <h2>Choose a Card Reward</h2>
-      <div id="cardRewards"></div>
-      <button id="skipReward">Skip Reward</button>
+    <section id="reward" class="window reward-window hidden">
+      <div class="window-header" id="rewardHeader">
+        <span>Choose a Card Reward</span>
+        <button id="skipReward" class="window-button">Skip</button>
+      </div>
+      <div class="window-body">
+        <div id="cardRewards"></div>
+      </div>
     </section>
 
     <section id="shop" class="hidden">
@@ -88,9 +92,14 @@
       </div>
     </section>
 
-    <section id="logArea">
-      <h3>Log</h3>
-      <div id="log"></div>
+    <section id="logArea" class="window log-window">
+      <div class="window-header" id="logHeader">
+        <span>Log</span>
+        <button id="logMinimize" class="window-button" aria-pressed="false">—</button>
+      </div>
+      <div id="logBody" class="window-body">
+        <div id="log"></div>
+      </div>
     </section>
 
   </main>
@@ -166,6 +175,11 @@
           <div id="bonusStats" class="hidden">
             <div class="bonus-label">Equipment Bonuses:</div>
             <div id="bonusDisplay"></div>
+          </div>
+
+          <div class="bag-panel">
+            <h3>Bag</h3>
+            <div id="bagGrid" class="bag-grid"></div>
           </div>
           
           <!-- Tooltip for hover -->
