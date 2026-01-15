@@ -14,7 +14,24 @@ h1{margin:0;font-size:1.1rem}
 #meta{display:flex;gap:12px;color:var(--muted);font-size:0.95rem}
 
 main{display:grid;grid-template-columns:320px 1fr;gap:16px;padding:18px}
-#dungeon, #combat, #logArea, #reward, #shop{background:var(--panel);padding:12px;border-radius:8px;min-height:140px}
+#dungeon, #combat, #logArea, #reward, #shop, #mapView{background:var(--panel);padding:12px;border-radius:8px;min-height:140px}
+#mapView{grid-column:1 / -1;min-height:620px}
+#mapContainer{display:flex;justify-content:center;align-items:center;margin-top:12px}
+#mapSvg{background:rgba(0,0,0,0.2);border-radius:8px}
+.map-node{cursor:pointer;transition:all 0.3s ease}
+.map-node.locked{opacity:0.4;cursor:not-allowed}
+.map-node.current{filter:drop-shadow(0 0 8px #ffcc33)}
+.map-node.visited{opacity:0.6}
+.map-node:hover:not(.locked){transform:scale(1.1)}
+.map-path{stroke:#2a4a6a;stroke-width:3;fill:none;opacity:0.5}
+.map-path.active{stroke:#4a7a9a;opacity:1}
+.node-icon{font-size:24px;text-anchor:middle;dominant-baseline:middle;user-select:none}
+.node-circle{fill:#1a3a5a;stroke:#4a7a9a;stroke-width:2}
+.node-circle.combat{fill:#4a2020;stroke:#8a4040}
+.node-circle.elite{fill:#6a2a6a;stroke:#aa4aaa}
+.node-circle.rest{fill:#2a4a2a;stroke:#4a8a4a}
+.node-circle.treasure{fill:#4a4a2a;stroke:#8a8a4a}
+.node-circle.boss{fill:#8a2a2a;stroke:#ff4a4a}
 #dungeon{display:flex;flex-direction:column;gap:10px;align-items:flex-start}
 #roomInfo{color:var(--muted)}
 .primary{background:var(--accent);border:none;padding:8px 12px;border-radius:6px;color:#081426;font-weight:700;cursor:pointer}

@@ -262,8 +262,10 @@ class Entity {
 
 class Game {
   constructor(){
-    this.roomCount = 8 + rand(5);
-    this.currentRoom = -1;
+    this.floors = 15; // Total floors including boss
+    this.currentFloor = 0;
+    this.currentNode = null;
+    this.mapNodes = [];
     this.gold = 0;
     this.startTime = Date.now();
     this.roomsCleared = 0;
@@ -271,8 +273,8 @@ class Game {
     this.setupUI();
     this.resetPlayer();
     this.makeDeck();
-    this.log("Welcome to DeckRPG! Click Start Run to generate a dungeon.");
-    $("roomCount").textContent = this.roomCount;
+    this.log("Welcome to DeckRPG! Click Start Run to explore the map.");
+    $("roomCount").textContent = this.floors;
   }
 
   setupUI(){
@@ -310,47 +312,218 @@ class Game {
     el.prepend(p);
   }
 
-  generateDungeon(){
-    this.rooms = [];
-    for(let i=0;i<this.roomCount;i++){ 
-      // weighted: mostly combat, some rest and treasure
-      const roll = Math.random();
-      let type = 'combat';
-      if(roll > 0.88) type = 'elite';
-      else if(roll > 0.78) type = 'treasure';
-      else if(roll > 0.68) type = 'rest';
-      this.rooms.push({ index: i, type });
+  generateMap(){
+    // Generate Slay the Spire style branching map
+    this.mapNodes = [];
+    const nodesPerFloor = [1, 3, 4, 4, 3, 4, 4, 3, 4, 4, 3, 4, 3, 2, 1]; // Branching pattern
+    
+    let nodeId = 0;
+    for(let floor = 0; floor < this.floors; floor++){
+      const nodeCount = nodesPerFloor[floor];
+      const floorNodes = [];
+      
+      for(let i = 0; i < nodeCount; i++){
+        let type;
+        if(floor === 0){
+          type = 'combat'; // Start node
+        } else if(floor === this.floors - 1){
+          type = 'boss'; // Final boss
+        } else if(floor % 4 === 0 && floor > 0){
+          type = 'rest'; // Rest nodes every 4 floors
+        } else {
+          // Weighted random for other floors
+          const roll = Math.random();
+          if(roll > 0.85) type = 'elite';
+          else if(roll > 0.70) type = 'treasure';
+          else if(roll > 0.60) type = 'rest';
+          else type = 'combat';
+        }
+        
+        floorNodes.push({
+          id: nodeId++,
+          floor: floor,
+          position: i,
+          type: type,
+          visited: false,
+          locked: floor > 0,
+          connections: []
+        });
+      }
+      
+      this.mapNodes.push(floorNodes);
+    }
+    
+    // Create connections between floors
+    for(let floor = 0; floor < this.floors - 1; floor++){
+      const currentFloor = this.mapNodes[floor];
+      const nextFloor = this.mapNodes[floor + 1];
+      
+      currentFloor.forEach((node, idx) => {
+        // Each node connects to 1-3 nodes in next floor
+        const nextFloorSize = nextFloor.length;
+        
+        if(nextFloorSize === 1){
+          // If next floor has 1 node, all connect to it
+          node.connections.push(nextFloor[0].id);
+        } else {
+          // Connect to nearby nodes in next floor
+          const spread = nextFloorSize > 3 ? 2 : 1;
+          const center = Math.floor((idx / currentFloor.length) * nextFloorSize);
+          
+          for(let i = Math.max(0, center - spread); i <= Math.min(nextFloorSize - 1, center + spread); i++){
+            if(Math.random() > 0.3 || node.connections.length === 0){
+              node.connections.push(nextFloor[i].id);
+            }
+          }
+        }
+      });
+    }
+    
+    // Unlock first floor nodes
+    this.mapNodes[0].forEach(node => node.locked = false);
+  }
+
+  renderMap(){
+    const svg = $("mapSvg");
+    svg.innerHTML = '';
+    
+    const width = 800;
+    const height = 600;
+    const floorHeight = height / (this.floors + 1);
+    
+    // Draw connections first (so they appear behind nodes)
+    this.mapNodes.forEach((floor, floorIdx) => {
+      floor.forEach(node => {
+        const x1 = (node.position + 1) * (width / (floor.length + 1));
+        const y1 = (floorIdx + 1) * floorHeight;
+        
+        node.connections.forEach(connId => {
+          const targetNode = this.findNodeById(connId);
+          if(targetNode){
+            const targetFloor = this.mapNodes[targetNode.floor];
+            const x2 = (targetNode.position + 1) * (width / (targetFloor.length + 1));
+            const y2 = (targetNode.floor + 1) * floorHeight;
+            
+            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            const d = `M ${x1} ${y1} Q ${(x1+x2)/2} ${(y1+y2)/2} ${x2} ${y2}`;
+            path.setAttribute('d', d);
+            path.setAttribute('class', `map-path ${!targetNode.locked ? 'active' : ''}`);
+            svg.appendChild(path);
+          }
+        });
+      });
+    });
+    
+    // Draw nodes
+    this.mapNodes.forEach((floor, floorIdx) => {
+      floor.forEach(node => {
+        const x = (node.position + 1) * (width / (floor.length + 1));
+        const y = (floorIdx + 1) * floorHeight;
+        
+        // Node group
+        const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        g.setAttribute('class', `map-node ${node.locked ? 'locked' : ''} ${node.visited ? 'visited' : ''} ${this.currentNode === node ? 'current' : ''}`);
+        g.setAttribute('data-node-id', node.id);
+        
+        // Node circle
+        const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        circle.setAttribute('cx', x);
+        circle.setAttribute('cy', y);
+        circle.setAttribute('r', 20);
+        circle.setAttribute('class', `node-circle ${node.type}`);
+        g.appendChild(circle);
+        
+        // Node icon
+        const icon = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        icon.setAttribute('x', x);
+        icon.setAttribute('y', y);
+        icon.setAttribute('class', 'node-icon');
+        icon.textContent = this.getNodeIcon(node.type);
+        g.appendChild(icon);
+        
+        // Click handler
+        if(!node.locked){
+          g.style.cursor = 'pointer';
+          g.addEventListener('click', () => this.selectNode(node));
+        }
+        
+        svg.appendChild(g);
+      });
+    });
+  }
+
+  getNodeIcon(type){
+    const icons = {
+      combat: '⚔️',
+      elite: '👑',
+      rest: '🔥',
+      treasure: '💰',
+      boss: '💀'
+    };
+    return icons[type] || '?';
+  }
+
+  findNodeById(id){
+    for(let floor of this.mapNodes){
+      for(let node of floor){
+        if(node.id === id) return node;
+      }
+    }
+    return null;
+  }
+
+  selectNode(node){
+    if(node.locked) return;
+    
+    this.currentNode = node;
+    node.visited = true;
+    this.currentFloor = node.floor;
+    
+    // Hide map, show appropriate room
+    $("mapView").classList.add('hidden');
+    
+    // Unlock connected nodes
+    node.connections.forEach(connId => {
+      const targetNode = this.findNodeById(connId);
+      if(targetNode) targetNode.locked = false;
+    });
+    
+    // Handle room type
+    this.enterRoom(node.type);
+  }
+
+  enterRoom(type){
+    $("roomIndex").textContent = this.currentFloor + 1;
+    
+    if(type === 'combat' || type === 'elite' || type === 'boss'){
+      this.startCombat(type);
+    } else if(type === 'rest'){
+      this.enterRest();
+    } else if(type === 'treasure'){
+      this.enterTreasure();
     }
   }
 
+  showMap(){
+    $("mapView").classList.remove('hidden');
+    $("dungeon").classList.add('hidden');
+    $("combat").classList.add('hidden');
+    this.renderMap();
+  }
+
   nextRoom(){
-    if(this.currentRoom === -1){
-      // start run
-      this.generateDungeon();
-      this.currentRoom = -1;
+    if(this.currentFloor === -1 || this.currentFloor === 0 && !this.mapNodes.length){
+      // Start run - generate map
+      this.generateMap();
+      this.currentFloor = 0;
       this.startTime = Date.now();
       this.roomsCleared = 0;
       this.enemiesDefeated = 0;
-      $("nextRoomBtn").textContent = 'Enter Next Room';
-      $("nextRoomBtn").classList.add('primary');
-    }
-    this.currentRoom++;
-    if(this.currentRoom >= this.roomCount){
-      this.showVictory();
+      this.showMap();
       return;
     }
-    $("roomIndex").textContent = this.currentRoom + 1;
-    const room = this.rooms[this.currentRoom];
-    $("roomInfo").textContent = `Room ${this.currentRoom +1 }: ${room.type.toUpperCase()}`;
-    if(room.type === 'combat' || room.type==='elite'){
-      this.startCombat(room.type);
-    } else if(room.type === 'rest'){
-      this.enterRest();
-    } else if(room.type === 'treasure'){
-      this.enterTreasure();
-    } else {
-      this.log('Empty room.');
-    }
+    // After completing a room, show map for next choice
+    this.showMap();
   }
 
   enterRest(){
@@ -360,6 +533,8 @@ class Game {
     this.log(`Rest: healed ${heal} HP.`);
     this.roomsCleared++;
     updateUI();
+    // Auto-return to map after short delay
+    setTimeout(() => this.showMap(), 1500);
   }
 
   enterTreasure(){
@@ -370,9 +545,23 @@ class Game {
   startCombat(type){
     $("combat").classList.remove('hidden');
     $("nextRoomBtn").disabled = true;
-    const baseHp = type==='elite' ? 36 + rand(10) : 20 + rand(12);
-    const baseAtk = type==='elite' ? 8 + rand(4) : 5 + rand(3);
-    this.enemy = new Entity(type==='elite' ? 'Elite' : 'Goblin', baseHp, baseHp);
+    
+    let baseHp, baseAtk, enemyName;
+    if(type === 'boss'){
+      baseHp = 80 + rand(20);
+      baseAtk = 12 + rand(5);
+      enemyName = 'Boss Dragon';
+    } else if(type === 'elite'){
+      baseHp = 36 + rand(10);
+      baseAtk = 8 + rand(4);
+      enemyName = 'Elite Warrior';
+    } else {
+      baseHp = 20 + rand(12);
+      baseAtk = 5 + rand(3);
+      enemyName = 'Goblin';
+    }
+    
+    this.enemy = new Entity(enemyName, baseHp, baseHp);
     this.enemy.atk = baseAtk;
     
     // Set Pokemon sprites using PokeAPI
@@ -383,7 +572,11 @@ class Game {
     
     // Enemy sprite - random Pokemon based on enemy type
     let enemySpriteId;
-    if(type === 'elite'){
+    if(type === 'boss'){
+      // Boss uses legendary dragons
+      const bossPokemon = [6, 149, 150, 383, 384, 483, 484, 487, 643, 644];
+      enemySpriteId = bossPokemon[rand(bossPokemon.length)];
+    } else if(type === 'elite'){
       // Elite enemies use legendary/mythical Pokemon
       enemySpriteId = ELITE_POKEMON_IDS[rand(ELITE_POKEMON_IDS.length)];
     } else {
@@ -472,6 +665,13 @@ class Game {
       this.log(`Loot: +${loot} gold.`);
       this.roomsCleared++;
       this.enemiesDefeated++;
+      
+      // Check if boss was defeated
+      if(this.currentNode && this.currentNode.type === 'boss'){
+        this.showVictory();
+        return;
+      }
+      
       // Show card rewards
       this.showCardRewards();
       return; // Don't proceed to next room yet
@@ -530,6 +730,10 @@ class Game {
 
   closeRewardScreen(){
     $("reward").classList.add('hidden');
+    $("combat").classList.add('hidden');
+    // Return to map for next choice
+    this.showMap();
+  }
     this.enemy = null;
     $("nextRoomBtn").disabled = false;
     this.deck.discard.push(...this.deck.hand);
@@ -586,10 +790,10 @@ class Game {
 
   leaveShop(){
     $("shop").classList.add('hidden');
-    $("nextRoomBtn").disabled = false;
     this.roomsCleared++;
     this.log('Left the shop.');
-    updateUI();
+    // Return to map for next choice
+    this.showMap();
   }
 
   showGameOver(){
@@ -599,7 +803,7 @@ class Game {
     
     $("endTitle").textContent = "Defeated!";
     $("endStats").innerHTML = `
-      <div>Rooms Cleared: ${this.roomsCleared}/${this.roomCount}</div>
+      <div>Rooms Cleared: ${this.roomsCleared}/${this.floors}</div>
       <div>Enemies Defeated: ${this.enemiesDefeated}</div>
       <div>Gold Collected: ${this.gold}</div>
       <div>Final Deck Size: ${this.deck.drawPile.length + this.deck.discard.length + this.deck.hand.length}</div>
@@ -618,8 +822,8 @@ class Game {
     $("endTitle").textContent = "Victory!";
     $("endTitle").style.color = '#3ad29f';
     $("endStats").innerHTML = `
-      <div>🎉 You conquered the dungeon! 🎉</div>
-      <div>Rooms Cleared: ${this.roomCount}/${this.roomCount}</div>
+      <div>🎉 You defeated the boss! 🎉</div>
+      <div>Rooms Cleared: ${this.roomsCleared}/${this.floors}</div>
       <div>Enemies Defeated: ${this.enemiesDefeated}</div>
       <div>Gold Collected: ${this.gold}</div>
       <div>Final Deck Size: ${this.deck.drawPile.length + this.deck.discard.length + this.deck.hand.length}</div>
@@ -627,7 +831,7 @@ class Game {
     `;
     $("gameOver").classList.remove('hidden');
     $("nextRoomBtn").disabled = true;
-    this.log("You reached the end of the dungeon. Victory!");
+    this.log("You defeated the boss. Victory!");
   }
 
   restart(){
