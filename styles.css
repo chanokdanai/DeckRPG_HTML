@@ -36,6 +36,7 @@ main{display:grid;grid-template-columns:320px 1fr;gap:16px;padding:18px}
 .card.common{border-color:rgba(155,155,155,0.3)}
 .card.uncommon{border-color:rgba(82,196,26,0.5)}
 .card.rare{border-color:rgba(24,144,255,0.6)}
+.card.legendary{border-color:rgba(255,165,0,0.8);background:linear-gradient(135deg,#102033 0%,#1a2540 100%)}
 #cardRewards,#shopCards{display:flex;gap:12px;flex-wrap:wrap;margin:12px 0}
 .card .title{font-weight:700;color:#ffffff}
 .card .cost{float:right;background:#0b2a44;padding:2px 6px;border-radius:4px;font-weight:700}

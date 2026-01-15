@@ -18,20 +18,161 @@ const CARD_POOL = {
     {id:'def', name:'Defend', cost:1, desc:'Gain 6 block', rarity:'common'},
     {id:'slash', name:'Slash', cost:1, desc:'Deal 7 damage', rarity:'common'},
     {id:'shield', name:'Shield', cost:1, desc:'Gain 7 block', rarity:'common'},
+    {id:'quickStrike', name:'Quick Strike', cost:0, desc:'Deal 3 damage', rarity:'common'},
+    {id:'prepare', name:'Prepare', cost:1, desc:'Draw 1 card', rarity:'common'},
   ],
   uncommon: [
     {id:'heavy', name:'Heavy Strike', cost:2, desc:'Deal 12 damage', rarity:'uncommon'},
     {id:'heal', name:'Heal', cost:1, desc:'Heal 8 HP', rarity:'uncommon'},
     {id:'powerStrike', name:'Power Strike', cost:2, desc:'Deal 15 damage', rarity:'uncommon'},
     {id:'ironWall', name:'Iron Wall', cost:2, desc:'Gain 12 block', rarity:'uncommon'},
+    {id:'tactician', name:'Tactician', cost:0, desc:'Draw 2 cards', rarity:'uncommon'},
+    {id:'cleave', name:'Cleave', cost:1, desc:'Deal 8 damage', rarity:'uncommon'},
   ],
   rare: [
     {id:'bash', name:'Bash', cost:2, desc:'Deal 16 damage', rarity:'rare'},
     {id:'rampage', name:'Rampage', cost:3, desc:'Deal 20 damage', rarity:'rare'},
     {id:'impervious', name:'Impervious', cost:2, desc:'Gain 15 block', rarity:'rare'},
     {id:'reaper', name:'Reaper', cost:2, desc:'Deal 8 damage, heal for damage dealt', rarity:'rare'},
+    {id:'deepThinking', name:'Deep Thinking', cost:1, desc:'Draw 3 cards', rarity:'rare'},
+    {id:'execute', name:'Execute', cost:2, desc:'Deal 18 damage', rarity:'rare'},
+  ],
+  legendary: [
+    {id:'omnislash', name:'Omnislash', cost:3, desc:'Deal 25 damage', rarity:'legendary'},
+    {id:'timeWarp', name:'Time Warp', cost:2, desc:'Draw 4 cards', rarity:'legendary'},
+    {id:'invincible', name:'Invincible', cost:3, desc:'Gain 20 block', rarity:'legendary'},
+    {id:'phoenix', name:'Phoenix', cost:2, desc:'Deal 10 damage, heal 10 HP', rarity:'legendary'},
   ]
 };
+
+/* Create a card with its effect function from a template */
+function createCardWithEffect(template, game) {
+  let playFn;
+  switch(template.id){
+    case 'atk': case 'slash': case 'quickStrike': case 'cleave':
+      let atkDmg = 6;
+      if(template.id === 'slash') atkDmg = 7;
+      else if(template.id === 'quickStrike') atkDmg = 3;
+      else if(template.id === 'cleave') atkDmg = 8;
+      playFn = (g,owner,target) => {
+        const actual = target.takeDamage(atkDmg);
+        g.log(`${owner.name} deals ${actual} damage to ${target.name}.`);
+      };
+      break;
+    case 'def': case 'shield':
+      const defBlock = template.id === 'shield' ? 7 : 6;
+      playFn = (g,owner) => {
+        owner.block += defBlock;
+        g.log(`${owner.name} gains ${defBlock} block.`);
+      };
+      break;
+    case 'heavy':
+      playFn = (g,owner,target) => {
+        const actual = target.takeDamage(12);
+        g.log(`${owner.name} deals ${actual} heavy damage to ${target.name}.`);
+      };
+      break;
+    case 'heal':
+      playFn = (g,owner) => {
+        owner.heal(8);
+        g.log(`${owner.name} heals 8 HP.`);
+      };
+      break;
+    case 'bash':
+      playFn = (g,owner,target) => {
+        const actual = target.takeDamage(16);
+        g.log(`${owner.name} bashes for ${actual} damage!`);
+      };
+      break;
+    case 'powerStrike':
+      playFn = (g,owner,target) => {
+        const actual = target.takeDamage(15);
+        g.log(`${owner.name} power strikes for ${actual} damage!`);
+      };
+      break;
+    case 'ironWall':
+      playFn = (g,owner) => {
+        owner.block += 12;
+        g.log(`${owner.name} gains 12 block from iron wall.`);
+      };
+      break;
+    case 'rampage':
+      playFn = (g,owner,target) => {
+        const actual = target.takeDamage(20);
+        g.log(`${owner.name} rampages for ${actual} massive damage!`);
+      };
+      break;
+    case 'impervious':
+      playFn = (g,owner) => {
+        owner.block += 15;
+        g.log(`${owner.name} becomes impervious with 15 block.`);
+      };
+      break;
+    case 'reaper':
+      playFn = (g,owner,target) => {
+        const actual = target.takeDamage(8);
+        owner.heal(actual);
+        g.log(`${owner.name} reaps ${actual} damage and heals for ${actual}!`);
+      };
+      break;
+    case 'execute':
+      playFn = (g,owner,target) => {
+        const actual = target.takeDamage(18);
+        g.log(`${owner.name} executes for ${actual} damage!`);
+      };
+      break;
+    case 'prepare':
+      playFn = (g,owner) => {
+        g.deck.draw(1);
+        g.log(`${owner.name} draws 1 card.`);
+        updateUI();
+      };
+      break;
+    case 'tactician':
+      playFn = (g,owner) => {
+        g.deck.draw(2);
+        g.log(`${owner.name} draws 2 cards.`);
+        updateUI();
+      };
+      break;
+    case 'deepThinking':
+      playFn = (g,owner) => {
+        g.deck.draw(3);
+        g.log(`${owner.name} draws 3 cards.`);
+        updateUI();
+      };
+      break;
+    case 'timeWarp':
+      playFn = (g,owner) => {
+        g.deck.draw(4);
+        g.log(`${owner.name} warps time and draws 4 cards!`);
+        updateUI();
+      };
+      break;
+    case 'omnislash':
+      playFn = (g,owner,target) => {
+        const actual = target.takeDamage(25);
+        g.log(`${owner.name} omnislashes for ${actual} devastating damage!`);
+      };
+      break;
+    case 'invincible':
+      playFn = (g,owner) => {
+        owner.block += 20;
+        g.log(`${owner.name} becomes invincible with 20 block!`);
+      };
+      break;
+    case 'phoenix':
+      playFn = (g,owner,target) => {
+        const actual = target.takeDamage(10);
+        owner.heal(10);
+        g.log(`${owner.name} channels phoenix power: ${actual} damage and 10 HP healed!`);
+      };
+      break;
+    default:
+      playFn = (g,owner) => g.log(`Played ${template.name}.`);
+  }
+  return makeCard(template.id, template.name, template.cost, template.desc, playFn, template.rarity);
+}
 
 /* Game State */
 class Deck {
@@ -121,84 +262,11 @@ class Game {
     // basic card set
     const cards = [];
     
-    // Card effect functions
-    const createCardWithEffect = (template) => {
-      let playFn;
-      switch(template.id){
-        case 'atk': case 'slash':
-          const atkDmg = template.id === 'slash' ? 7 : 6;
-          playFn = (g,owner,target) => {
-            const actual = target.takeDamage(atkDmg);
-            g.log(`${owner.name} deals ${actual} damage to ${target.name}.`);
-          };
-          break;
-        case 'def': case 'shield':
-          const defBlock = template.id === 'shield' ? 7 : 6;
-          playFn = (g,owner) => {
-            owner.block += defBlock;
-            g.log(`${owner.name} gains ${defBlock} block.`);
-          };
-          break;
-        case 'heavy':
-          playFn = (g,owner,target) => {
-            const actual = target.takeDamage(12);
-            g.log(`${owner.name} deals ${actual} heavy damage to ${target.name}.`);
-          };
-          break;
-        case 'heal':
-          playFn = (g,owner) => {
-            owner.heal(8);
-            g.log(`${owner.name} heals 8 HP.`);
-          };
-          break;
-        case 'bash':
-          playFn = (g,owner,target) => {
-            const actual = target.takeDamage(16);
-            g.log(`${owner.name} bashes for ${actual} damage!`);
-          };
-          break;
-        case 'powerStrike':
-          playFn = (g,owner,target) => {
-            const actual = target.takeDamage(15);
-            g.log(`${owner.name} power strikes for ${actual} damage!`);
-          };
-          break;
-        case 'ironWall':
-          playFn = (g,owner) => {
-            owner.block += 12;
-            g.log(`${owner.name} gains 12 block from iron wall.`);
-          };
-          break;
-        case 'rampage':
-          playFn = (g,owner,target) => {
-            const actual = target.takeDamage(20);
-            g.log(`${owner.name} rampages for ${actual} massive damage!`);
-          };
-          break;
-        case 'impervious':
-          playFn = (g,owner) => {
-            owner.block += 15;
-            g.log(`${owner.name} becomes impervious with 15 block.`);
-          };
-          break;
-        case 'reaper':
-          playFn = (g,owner,target) => {
-            const actual = target.takeDamage(8);
-            owner.heal(actual);
-            g.log(`${owner.name} reaps ${actual} damage and heals for ${actual}!`);
-          };
-          break;
-        default:
-          playFn = (g,owner) => g.log(`Played ${template.name}.`);
-      }
-      return makeCard(template.id, template.name, template.cost, template.desc, playFn, template.rarity);
-    };
-
     // populate starting deck: mostly strikes and defends
-    for(let i=0;i<6;i++) cards.push(createCardWithEffect(CARD_POOL.common[0])); // Strike
-    for(let i=0;i<4;i++) cards.push(createCardWithEffect(CARD_POOL.common[1])); // Defend
-    cards.push(createCardWithEffect(CARD_POOL.uncommon[0])); // Heavy Strike
-    cards.push(createCardWithEffect(CARD_POOL.uncommon[1])); // Heal
+    for(let i=0;i<6;i++) cards.push(createCardWithEffect(CARD_POOL.common[0], this)); // Strike
+    for(let i=0;i<4;i++) cards.push(createCardWithEffect(CARD_POOL.common[1], this)); // Defend
+    cards.push(createCardWithEffect(CARD_POOL.uncommon[0], this)); // Heavy Strike
+    cards.push(createCardWithEffect(CARD_POOL.uncommon[1], this)); // Heal
 
     this.deck = new Deck(cards);
     updateUI();
@@ -380,7 +448,8 @@ class Game {
     for(let i=0; i<3; i++){
       const rarity = Math.random();
       let pool;
-      if(rarity > 0.85) pool = CARD_POOL.rare;
+      if(rarity > 0.97) pool = CARD_POOL.legendary;
+      else if(rarity > 0.85) pool = CARD_POOL.rare;
       else if(rarity > 0.5) pool = CARD_POOL.uncommon;
       else pool = CARD_POOL.common;
       
@@ -404,79 +473,7 @@ class Game {
 
   selectReward(template){
     // Add the selected card to the deck
-    const createCardWithEffect = (template) => {
-      let playFn;
-      switch(template.id){
-        case 'atk': case 'slash':
-          const atkDmg = template.id === 'slash' ? 7 : 6;
-          playFn = (g,owner,target) => {
-            const actual = target.takeDamage(atkDmg);
-            g.log(`${owner.name} deals ${actual} damage to ${target.name}.`);
-          };
-          break;
-        case 'def': case 'shield':
-          const defBlock = template.id === 'shield' ? 7 : 6;
-          playFn = (g,owner) => {
-            owner.block += defBlock;
-            g.log(`${owner.name} gains ${defBlock} block.`);
-          };
-          break;
-        case 'heavy':
-          playFn = (g,owner,target) => {
-            const actual = target.takeDamage(12);
-            g.log(`${owner.name} deals ${actual} heavy damage to ${target.name}.`);
-          };
-          break;
-        case 'heal':
-          playFn = (g,owner) => {
-            owner.heal(8);
-            g.log(`${owner.name} heals 8 HP.`);
-          };
-          break;
-        case 'bash':
-          playFn = (g,owner,target) => {
-            const actual = target.takeDamage(16);
-            g.log(`${owner.name} bashes for ${actual} damage!`);
-          };
-          break;
-        case 'powerStrike':
-          playFn = (g,owner,target) => {
-            const actual = target.takeDamage(15);
-            g.log(`${owner.name} power strikes for ${actual} damage!`);
-          };
-          break;
-        case 'ironWall':
-          playFn = (g,owner) => {
-            owner.block += 12;
-            g.log(`${owner.name} gains 12 block from iron wall.`);
-          };
-          break;
-        case 'rampage':
-          playFn = (g,owner,target) => {
-            const actual = target.takeDamage(20);
-            g.log(`${owner.name} rampages for ${actual} massive damage!`);
-          };
-          break;
-        case 'impervious':
-          playFn = (g,owner) => {
-            owner.block += 15;
-            g.log(`${owner.name} becomes impervious with 15 block.`);
-          };
-          break;
-        case 'reaper':
-          playFn = (g,owner,target) => {
-            const actual = target.takeDamage(8);
-            owner.heal(actual);
-            g.log(`${owner.name} reaps ${actual} damage and heals for ${actual}!`);
-          };
-          break;
-        default:
-          playFn = (g,owner) => g.log(`Played ${template.name}.`);
-      }
-      return makeCard(template.id, template.name, template.cost, template.desc, playFn, template.rarity);
-    };
-    
-    const newCard = createCardWithEffect(template);
+    const newCard = createCardWithEffect(template, this);
     this.deck.discard.push(newCard);
     this.log(`Added ${template.name} to your deck!`);
     this.closeRewardScreen();
@@ -502,10 +499,13 @@ class Game {
     
     // Generate shop inventory
     const shopItems = [];
-    for(let i=0; i<5; i++){
+    for(let i=0; i<6; i++){
       const rarity = Math.random();
       let pool, price;
-      if(rarity > 0.9) {
+      if(rarity > 0.95) {
+        pool = CARD_POOL.legendary;
+        price = 120 + rand(41);
+      } else if(rarity > 0.85) {
         pool = CARD_POOL.rare;
         price = 75 + rand(26);
       } else if(rarity > 0.5) {
@@ -548,80 +548,7 @@ class Game {
     }
     
     this.gold -= item.price;
-    
-    const createCardWithEffect = (template) => {
-      let playFn;
-      switch(template.id){
-        case 'atk': case 'slash':
-          const atkDmg = template.id === 'slash' ? 7 : 6;
-          playFn = (g,owner,target) => {
-            const actual = target.takeDamage(atkDmg);
-            g.log(`${owner.name} deals ${actual} damage to ${target.name}.`);
-          };
-          break;
-        case 'def': case 'shield':
-          const defBlock = template.id === 'shield' ? 7 : 6;
-          playFn = (g,owner) => {
-            owner.block += defBlock;
-            g.log(`${owner.name} gains ${defBlock} block.`);
-          };
-          break;
-        case 'heavy':
-          playFn = (g,owner,target) => {
-            const actual = target.takeDamage(12);
-            g.log(`${owner.name} deals ${actual} heavy damage to ${target.name}.`);
-          };
-          break;
-        case 'heal':
-          playFn = (g,owner) => {
-            owner.heal(8);
-            g.log(`${owner.name} heals 8 HP.`);
-          };
-          break;
-        case 'bash':
-          playFn = (g,owner,target) => {
-            const actual = target.takeDamage(16);
-            g.log(`${owner.name} bashes for ${actual} damage!`);
-          };
-          break;
-        case 'powerStrike':
-          playFn = (g,owner,target) => {
-            const actual = target.takeDamage(15);
-            g.log(`${owner.name} power strikes for ${actual} damage!`);
-          };
-          break;
-        case 'ironWall':
-          playFn = (g,owner) => {
-            owner.block += 12;
-            g.log(`${owner.name} gains 12 block from iron wall.`);
-          };
-          break;
-        case 'rampage':
-          playFn = (g,owner,target) => {
-            const actual = target.takeDamage(20);
-            g.log(`${owner.name} rampages for ${actual} massive damage!`);
-          };
-          break;
-        case 'impervious':
-          playFn = (g,owner) => {
-            owner.block += 15;
-            g.log(`${owner.name} becomes impervious with 15 block.`);
-          };
-          break;
-        case 'reaper':
-          playFn = (g,owner,target) => {
-            const actual = target.takeDamage(8);
-            owner.heal(actual);
-            g.log(`${owner.name} reaps ${actual} damage and heals for ${actual}!`);
-          };
-          break;
-        default:
-          playFn = (g,owner) => g.log(`Played ${template.name}.`);
-      }
-      return makeCard(template.id, template.name, template.cost, template.desc, playFn, template.rarity);
-    };
-    
-    const newCard = createCardWithEffect(item);
+    const newCard = createCardWithEffect(item, this);
     this.deck.discard.push(newCard);
     this.log(`Purchased ${item.name} for ${item.price} gold!`);
     this.showShop(); // Refresh shop display
