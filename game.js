@@ -12,6 +12,23 @@ function makeCard(id, name, cost, desc, playFn, rarity='common'){
 }
 
 /* Item/Equipment definitions for Diablo-style inventory system */
+const EQUIPMENT_TYPES = ['weapon', 'armor', 'boots', 'gloves', 'ring', 'necklace', 'helmet', 'belt'];
+
+const EMOJI_MAP = {
+  helmet: '🪖',
+  weapon: '⚔️',
+  leftHand: '🗡️',
+  rightHand: '🛡️',
+  necklace: '📿',
+  armor: '👕',
+  ring: '💍',
+  ring1: '💍',
+  ring2: '💍',
+  gloves: '🧤',
+  belt: '🔗',
+  boots: '👢'
+};
+
 const ITEM_POOL = {
   weapon: {
     common: [
@@ -214,8 +231,7 @@ function generateLoot(sourceType, rarityBonus = 0) {
     if(Math.random() > dropChance) continue;
     
     // Select item type
-    const types = ['weapon', 'armor', 'boots', 'gloves', 'ring', 'necklace', 'helmet', 'belt'];
-    const itemType = types[rand(types.length)];
+    const itemType = EQUIPMENT_TYPES[rand(EQUIPMENT_TYPES.length)];
     
     // Select rarity with bonus
     const rarityRoll = Math.random() + rarityBonus;
@@ -1218,7 +1234,7 @@ class Game {
   }
 
   updateInventoryUI() {
-    const slots = ['helmet', 'leftHand', 'necklace', 'rightHand', 'armor', 'ring1', 'ring2', 'gloves', 'belt', 'boots'];
+    const slots = Object.keys(this.inventory);
     
     slots.forEach(slot => {
       const slotEl = $(slot + 'Slot');
@@ -1273,38 +1289,19 @@ class Game {
   }
 
   getSlotEmoji(slot) {
-    const emojis = {
-      helmet: '🪖',
-      leftHand: '🗡️',
-      rightHand: '🛡️',
-      necklace: '📿',
-      armor: '👕',
-      ring1: '💍',
-      ring2: '💍',
-      gloves: '🧤',
-      belt: '🔗',
-      boots: '👢'
-    };
-    return emojis[slot] || '?';
+    return EMOJI_MAP[slot] || '?';
   }
 
   getItemEmoji(type) {
-    const emojis = {
-      helmet: '🪖',
-      weapon: '⚔️',
-      necklace: '📿',
-      armor: '👕',
-      ring: '💍',
-      gloves: '🧤',
-      belt: '🔗',
-      boots: '👢'
-    };
-    return emojis[type] || '❓';
+    return EMOJI_MAP[type] || '❓';
   }
+
+  draggedElement = null;
 
   handleDragStart(e, fromSlot) {
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('text/plain', fromSlot);
+    this.draggedElement = e.target;
     e.target.classList.add('dragging');
   }
 
@@ -1323,7 +1320,11 @@ class Game {
       updateUI();
     }
     
-    document.querySelectorAll('.dragging').forEach(el => el.classList.remove('dragging'));
+    // Clean up dragging state
+    if(this.draggedElement) {
+      this.draggedElement.classList.remove('dragging');
+      this.draggedElement = null;
+    }
   }
 
   showItemTooltip(e, item) {
