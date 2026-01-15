@@ -7,6 +7,18 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+  <div id="mainMenu" class="screen">
+    <div class="menu-container">
+      <h1 class="menu-title">DeckRPG</h1>
+      <div class="menu-subtitle">Mini Roguelike</div>
+      <div class="menu-buttons">
+        <button id="newRunBtn" class="menu-btn primary">New Run</button>
+        <button id="saveManagementBtn" class="menu-btn">Save Management</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="gameScreen" class="screen hidden">
   <header>
     <h1>DeckRPG — Mini Roguelike</h1>
     <div id="meta">
@@ -20,6 +32,7 @@
       <h2>Choose Your Path</h2>
       <div id="mapContainer">
         <svg id="mapSvg" width="800" height="600"></svg>
+        <div id="mapTooltip" class="map-tooltip"></div>
       </div>
     </section>
 
@@ -65,7 +78,6 @@
 
       <div id="controls">
         <button id="endTurn">End Turn</button>
-        <button id="drawBtn">Draw</button>
         <div>Energy: <span id="energy">0</span></div>
       </div>
 
@@ -79,7 +91,70 @@
       <h3>Log</h3>
       <div id="log"></div>
     </section>
+
+    <section id="inventoryArea">
+      <h3>Inventory</h3>
+      <div class="inventory-grid">
+        <!-- Top row: Head -->
+        <div class="inv-slot empty" data-slot="helmet" id="helmetSlot">
+          <div class="slot-icon">🪖</div>
+        </div>
+        
+        <!-- Second row: Hands and Neck -->
+        <div class="inv-slot empty" data-slot="leftHand" id="leftHandSlot">
+          <div class="slot-icon">🗡️</div>
+        </div>
+        <div class="inv-slot empty" data-slot="necklace" id="necklaceSlot">
+          <div class="slot-icon">📿</div>
+        </div>
+        <div class="inv-slot empty" data-slot="rightHand" id="rightHandSlot">
+          <div class="slot-icon">🛡️</div>
+        </div>
+        
+        <!-- Third row: Armor -->
+        <div class="inv-slot empty" data-slot="armor" id="armorSlot">
+          <div class="slot-icon">👕</div>
+        </div>
+        
+        <!-- Fourth row: Rings -->
+        <div class="inv-slot empty" data-slot="ring1" id="ring1Slot">
+          <div class="slot-icon">💍</div>
+        </div>
+        <div class="inv-slot empty" data-slot="ring2" id="ring2Slot">
+          <div class="slot-icon">💍</div>
+        </div>
+        
+        <!-- Fifth row: Gloves and Belt -->
+        <div class="inv-slot empty" data-slot="gloves" id="glovesSlot">
+          <div class="slot-icon">🧤</div>
+        </div>
+        <div class="inv-slot empty" data-slot="belt" id="beltSlot">
+          <div class="slot-icon">🔗</div>
+        </div>
+        
+        <!-- Bottom row: Boots -->
+        <div class="inv-slot empty" data-slot="boots" id="bootsSlot">
+          <div class="slot-icon">👢</div>
+        </div>
+      </div>
+      
+      <div id="bonusStats" class="hidden">
+        <div class="bonus-label">Equipment Bonuses:</div>
+        <div id="bonusDisplay"></div>
+      </div>
+      
+      <!-- Tooltip for hover -->
+      <div id="itemTooltip" class="item-tooltip hidden"></div>
+    </section>
   </main>
+
+  <div id="lootModal" class="modal hidden">
+    <div class="modal-content">
+      <h2>Loot Dropped!</h2>
+      <div id="lootItems"></div>
+      <button id="closeLootBtn" class="primary">Continue</button>
+    </div>
+  </div>
 
   <div id="gameOver" class="modal hidden">
     <div class="modal-content">
@@ -92,6 +167,17 @@
   <footer>
     <small>Deck Building Roguelike: Build your deck, defeat enemies, and conquer the dungeon!</small>
   </footer>
+  </div>
+
+  <div id="saveManagementScreen" class="screen hidden">
+    <div class="menu-container">
+      <h2>Save Management</h2>
+      <div id="saveList" class="save-list">
+        <div class="save-item">No saves available</div>
+      </div>
+      <button id="backToMenuBtn" class="menu-btn">Back to Menu</button>
+    </div>
+  </div>
 
   <script src="game.js"></script>
 </body>
