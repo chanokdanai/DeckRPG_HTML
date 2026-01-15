@@ -64,6 +64,8 @@ class Game {
     this.currentNode = null;
     this.mapNodes = [];
     this.gold = 0;
+    this.playerSpriteId = 25;
+    this.selectedClasses = [];
     this.inventory = {
       helmet: null,
       leftHand: null,
@@ -84,7 +86,7 @@ class Game {
     this.setupUI();
     this.resetPlayer();
     this.makeDeck();
-    this.log("Welcome to DeckRPG! Click Start Run to explore the map.");
+    this.log("Welcome to DeckRPG! Select your classes to begin the run.");
     $("roomCount").textContent = this.floors;
   }
 
