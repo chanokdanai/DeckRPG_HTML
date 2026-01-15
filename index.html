@@ -24,6 +24,7 @@
     <div id="meta">
       <div>Room: <span id="roomIndex">0</span>/<span id="roomCount">0</span></div>
       <div>Gold: <span id="gold">0</span></div>
+      <button id="openInventoryBtn" class="inventory-btn">Inventory</button>
     </div>
   </header>
 
@@ -92,60 +93,6 @@
       <div id="log"></div>
     </section>
 
-    <section id="inventoryArea">
-      <h3>Inventory</h3>
-      <div class="inventory-grid">
-        <!-- Top row: Head -->
-        <div class="inv-slot empty" data-slot="helmet" id="helmetSlot">
-          <div class="slot-icon">🪖</div>
-        </div>
-        
-        <!-- Second row: Hands and Neck -->
-        <div class="inv-slot empty" data-slot="leftHand" id="leftHandSlot">
-          <div class="slot-icon">🗡️</div>
-        </div>
-        <div class="inv-slot empty" data-slot="necklace" id="necklaceSlot">
-          <div class="slot-icon">📿</div>
-        </div>
-        <div class="inv-slot empty" data-slot="rightHand" id="rightHandSlot">
-          <div class="slot-icon">🛡️</div>
-        </div>
-        
-        <!-- Third row: Armor -->
-        <div class="inv-slot empty" data-slot="armor" id="armorSlot">
-          <div class="slot-icon">👕</div>
-        </div>
-        
-        <!-- Fourth row: Rings -->
-        <div class="inv-slot empty" data-slot="ring1" id="ring1Slot">
-          <div class="slot-icon">💍</div>
-        </div>
-        <div class="inv-slot empty" data-slot="ring2" id="ring2Slot">
-          <div class="slot-icon">💍</div>
-        </div>
-        
-        <!-- Fifth row: Gloves and Belt -->
-        <div class="inv-slot empty" data-slot="gloves" id="glovesSlot">
-          <div class="slot-icon">🧤</div>
-        </div>
-        <div class="inv-slot empty" data-slot="belt" id="beltSlot">
-          <div class="slot-icon">🔗</div>
-        </div>
-        
-        <!-- Bottom row: Boots -->
-        <div class="inv-slot empty" data-slot="boots" id="bootsSlot">
-          <div class="slot-icon">👢</div>
-        </div>
-      </div>
-      
-      <div id="bonusStats" class="hidden">
-        <div class="bonus-label">Equipment Bonuses:</div>
-        <div id="bonusDisplay"></div>
-      </div>
-      
-      <!-- Tooltip for hover -->
-      <div id="itemTooltip" class="item-tooltip hidden"></div>
-    </section>
   </main>
 
   <div id="lootModal" class="modal hidden">
@@ -164,6 +111,74 @@
     </div>
   </div>
 
+  <div id="inventoryModal" class="modal hidden">
+    <div class="modal-content inventory-modal">
+      <div class="inventory-modal-header">
+        <h2>Inventory</h2>
+        <button id="closeInventoryBtn" class="primary">Close</button>
+      </div>
+      <div class="inventory-modal-body">
+        <div id="inventoryArea" class="inventory-modal-area">
+          <div class="inventory-grid">
+            <!-- Top row: Head -->
+            <div class="inv-slot empty" data-slot="helmet" id="helmetSlot">
+              <div class="slot-icon">🪖</div>
+            </div>
+            
+            <!-- Second row: Hands and Neck -->
+            <div class="inv-slot empty" data-slot="leftHand" id="leftHandSlot">
+              <div class="slot-icon">🗡️</div>
+            </div>
+            <div class="inv-slot empty" data-slot="necklace" id="necklaceSlot">
+              <div class="slot-icon">📿</div>
+            </div>
+            <div class="inv-slot empty" data-slot="rightHand" id="rightHandSlot">
+              <div class="slot-icon">🛡️</div>
+            </div>
+            
+            <!-- Third row: Armor -->
+            <div class="inv-slot empty" data-slot="armor" id="armorSlot">
+              <div class="slot-icon">👕</div>
+            </div>
+            
+            <!-- Fourth row: Rings -->
+            <div class="inv-slot empty" data-slot="ring1" id="ring1Slot">
+              <div class="slot-icon">💍</div>
+            </div>
+            <div class="inv-slot empty" data-slot="ring2" id="ring2Slot">
+              <div class="slot-icon">💍</div>
+            </div>
+            
+            <!-- Fifth row: Gloves and Belt -->
+            <div class="inv-slot empty" data-slot="gloves" id="glovesSlot">
+              <div class="slot-icon">🧤</div>
+            </div>
+            <div class="inv-slot empty" data-slot="belt" id="beltSlot">
+              <div class="slot-icon">🔗</div>
+            </div>
+            
+            <!-- Bottom row: Boots -->
+            <div class="inv-slot empty" data-slot="boots" id="bootsSlot">
+              <div class="slot-icon">👢</div>
+            </div>
+          </div>
+          
+          <div id="bonusStats" class="hidden">
+            <div class="bonus-label">Equipment Bonuses:</div>
+            <div id="bonusDisplay"></div>
+          </div>
+          
+          <!-- Tooltip for hover -->
+          <div id="itemTooltip" class="item-tooltip hidden"></div>
+        </div>
+        <div class="equipment-panel">
+          <h3>Equipment</h3>
+          <div id="equipmentSlots"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <footer>
     <small>Deck Building Roguelike: Build your deck, defeat enemies, and conquer the dungeon!</small>
   </footer>
@@ -179,6 +194,9 @@
     </div>
   </div>
 
+  <script src="utils.js"></script>
+  <script src="cards.js"></script>
   <script src="game.js"></script>
+  <script src="menu.js"></script>
 </body>
 </html>
