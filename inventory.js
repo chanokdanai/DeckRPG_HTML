@@ -9,6 +9,14 @@ Game.prototype.closeInventoryModal = function(){
 };
 
 Game.prototype.equipItem = function(item) {
+  if(item.type === 'potion') {
+    if(this.addPotionToSlots(item)) {
+      this.log(`Stored ${item.name} in potion slot.`);
+    } else {
+      this.log('Potion slots are full.');
+    }
+    return;
+  }
   let slot = item.type;
   
   // Map item types to inventory slots
@@ -52,6 +60,7 @@ Game.prototype.equipItem = function(item) {
 
 Game.prototype.applyItemStats = function(item) {
   if(!item || !item.stats) return;
+  if(item.type === 'potion') return;
   
   const stats = item.stats;
   if(stats.hp) {
@@ -71,6 +80,7 @@ Game.prototype.applyItemStats = function(item) {
 
 Game.prototype.unapplyItemStats = function(item) {
   if(!item || !item.stats) return;
+  if(item.type === 'potion') return;
   
   const stats = item.stats;
   if(stats.hp) {
@@ -105,7 +115,8 @@ Game.prototype.updateInventoryUI = function() {
         <div class="item-rarity-border"></div>
       `;
       slotEl.draggable = true;
-      slotEl.ondragstart = (e) => this.handleDragStart(e, slot);
+      slotEl.ondragstart = (e) => this.handleDragStart(e, {type:'equip', slot});
+      slotEl.ondragend = (e) => this.handleDragEnd(e);
       slotEl.onclick = () => this.unequipItem(slot);
       
       // Tooltip on hover
@@ -142,7 +153,9 @@ Game.prototype.updateInventoryUI = function() {
     bonusStatsEl.classList.add('hidden');
   }
   this.updateEquipmentSlots();
+  this.updatePotionUI();
   this.updateBagUI();
+  this.setupTrashDrop();
 };
 
 Game.prototype.updateEquipmentSlots = function() {
@@ -177,7 +190,7 @@ Game.prototype.updateEquipmentSlots = function() {
     if(item) {
       content.innerHTML = `
         <div class="item-name">${item.name}</div>
-        <div class="item-stats">${this.formatItemStats(item.stats)}</div>
+        <div class="item-stats">${this.formatItemStats(item.stats, item)}</div>
         <div class="item-rarity ${item.rarity}">${item.rarity}</div>
       `;
       content.onclick = () => this.unequipItem(slot);
@@ -208,11 +221,126 @@ Game.prototype.updateBagUI = function() {
       slotEl.onclick = () => this.equipItemFromBag(index);
       slotEl.onmouseenter = (e) => this.showItemTooltip(e, item);
       slotEl.onmouseleave = () => this.hideItemTooltip();
+      slotEl.draggable = true;
+      slotEl.ondragstart = (e) => this.handleDragStart(e, {type:'bag', index});
+      slotEl.ondragend = (e) => this.handleDragEnd(e);
     } else {
       slotEl.innerHTML = `<div class="slot-icon">+</div>`;
+      slotEl.draggable = false;
+      slotEl.ondragstart = null;
+      slotEl.ondragend = null;
     }
     grid.appendChild(slotEl);
   });
+};
+
+Game.prototype.updatePotionUI = function() {
+  const slotsEl = $("potionSlots");
+  if(!slotsEl) return;
+  slotsEl.innerHTML = '';
+  this.potions.forEach((potion, index) => {
+    const slotEl = document.createElement('div');
+    slotEl.className = `inv-slot potion-slot ${potion ? potion.rarity : 'empty'}`;
+    if(potion) {
+      slotEl.innerHTML = `
+        <div class="item-icon">
+          <div class="item-icon-image">${this.getItemEmoji(potion.type)}</div>
+          <div class="item-icon-name">${potion.name}</div>
+        </div>
+        <div class="item-rarity-border"></div>
+      `;
+      slotEl.onclick = () => this.usePotion(index);
+      slotEl.onmouseenter = (e) => this.showItemTooltip(e, potion);
+      slotEl.onmouseleave = () => this.hideItemTooltip();
+      slotEl.draggable = true;
+      slotEl.ondragstart = (e) => this.handleDragStart(e, {type:'potion', index});
+      slotEl.ondragend = (e) => this.handleDragEnd(e);
+    } else {
+      slotEl.innerHTML = `<div class="slot-icon">+</div>`;
+      slotEl.draggable = false;
+    }
+    slotsEl.appendChild(slotEl);
+  });
+};
+
+Game.prototype.addPotionToSlots = function(potion) {
+  const emptyIndex = this.potions.findIndex(slot => slot === null);
+  if(emptyIndex === -1) {
+    return false;
+  }
+  this.potions[emptyIndex] = potion;
+  this.updateInventoryUI();
+  return true;
+};
+
+Game.prototype.usePotion = function(index) {
+  const potion = this.potions[index];
+  if(!potion) return;
+  const stats = potion.stats || {};
+  if(stats.heal) {
+    this.player.heal(stats.heal);
+    this.log(`Used ${potion.name} and healed ${stats.heal} HP.`);
+  }
+  if(stats.energy) {
+    this.player.energy = (this.player.energy || 0) + stats.energy;
+    this.log(`Used ${potion.name} and gained ${stats.energy} energy.`);
+  }
+  if(stats.draw) {
+    this.deck.draw(stats.draw);
+    this.log(`Used ${potion.name} and drew ${stats.draw} card${stats.draw !== 1 ? 's' : ''}.`);
+  }
+  if(stats.attack) {
+    this.player.tempAttack = (this.player.tempAttack || 0) + stats.attack;
+    this.log(`Used ${potion.name} and gained ${stats.attack} attack this combat.`);
+  }
+  this.potions[index] = null;
+  this.updateInventoryUI();
+  updateUI();
+};
+
+Game.prototype.setupTrashDrop = function() {
+  const trash = $("inventoryTrash");
+  if(!trash || trash.dataset.bound === 'true') return;
+  trash.dataset.bound = 'true';
+  trash.ondragover = (e) => e.preventDefault();
+  trash.ondragenter = (e) => {
+    e.preventDefault();
+    trash.classList.add('drag-over');
+  };
+  trash.ondragleave = () => trash.classList.remove('drag-over');
+  trash.ondrop = (e) => {
+    e.preventDefault();
+    trash.classList.remove('drag-over');
+    const raw = e.dataTransfer.getData('text/plain');
+    const payload = this.parseDragPayload(raw);
+    this.trashItem(payload);
+    this.handleDragEnd();
+  };
+};
+
+Game.prototype.trashItem = function(payload) {
+  if(!payload) return;
+  if(payload.type === 'equip' && payload.slot) {
+    const item = this.inventory[payload.slot];
+    if(!item) return;
+    this.unapplyItemStats(item);
+    this.inventory[payload.slot] = null;
+    this.log(`Trashed ${item.name}.`);
+  }
+  if(payload.type === 'bag') {
+    const item = this.bag[payload.index];
+    if(!item) return;
+    this.bag[payload.index] = null;
+    this.log(`Trashed ${item.name}.`);
+  }
+  if(payload.type === 'potion') {
+    const item = this.potions[payload.index];
+    if(!item) return;
+    this.potions[payload.index] = null;
+    this.log(`Discarded ${item.name}.`);
+  }
+  this.updateInventoryUI();
+  updateUI();
 };
 
 Game.prototype.addItemToBag = function(item, silent = false) {
@@ -231,6 +359,7 @@ Game.prototype.addItemToBag = function(item, silent = false) {
 
 Game.prototype.canEquipItem = function(item) {
   if(!item) return false;
+  if(item.type === 'potion') return false;
   if(item.type === 'weapon' || item.type === 'ring') return true;
   return Object.prototype.hasOwnProperty.call(this.inventory, item.type);
 };
@@ -250,33 +379,51 @@ Game.prototype.getItemEmoji = function(type) {
   return EMOJI_MAP[type] || '❓';
 };
 
-Game.prototype.handleDragStart = function(e, fromSlot) {
+Game.prototype.handleDragStart = function(e, payload) {
   e.dataTransfer.effectAllowed = 'move';
-  e.dataTransfer.setData('text/plain', fromSlot);
-  this.draggedElement = e.target;
-  e.target.classList.add('dragging');
+  const data = typeof payload === 'string' ? {type:'equip', slot: payload} : payload;
+  e.dataTransfer.setData('text/plain', JSON.stringify(data));
+  this.draggedElement = e.currentTarget;
+  if(this.draggedElement){
+    this.draggedElement.classList.add('dragging');
+  }
 };
 
-Game.prototype.handleDrop = function(e, toSlot) {
-  e.preventDefault();
-  e.target.classList.remove('drag-over');
-  const fromSlot = e.dataTransfer.getData('text/plain');
-  
-  if(fromSlot && fromSlot !== toSlot) {
-    // Swap items
-    const temp = this.inventory[fromSlot];
-    this.inventory[fromSlot] = this.inventory[toSlot];
-    this.inventory[toSlot] = temp;
-    
-    this.updateInventoryUI();
-    updateUI();
-  }
-  
-  // Clean up dragging state
+Game.prototype.handleDragEnd = function() {
   if(this.draggedElement) {
     this.draggedElement.classList.remove('dragging');
     this.draggedElement = null;
   }
+};
+
+Game.prototype.parseDragPayload = function(raw) {
+  if(!raw) return null;
+  try {
+    return JSON.parse(raw);
+  } catch (err) {
+    if(this.log){
+      this.log('Drag payload invalid.');
+    }
+    return {type:'equip', slot: raw};
+  }
+};
+
+Game.prototype.handleDrop = function(e, toSlot) {
+  e.preventDefault();
+  const targetEl = e.currentTarget || e.target;
+  if(targetEl) targetEl.classList.remove('drag-over');
+  const raw = e.dataTransfer.getData('text/plain');
+  const payload = this.parseDragPayload(raw);
+
+  if(payload && payload.type === 'equip' && payload.slot && payload.slot !== toSlot) {
+    const temp = this.inventory[payload.slot];
+    this.inventory[payload.slot] = this.inventory[toSlot];
+    this.inventory[toSlot] = temp;
+    this.updateInventoryUI();
+    updateUI();
+  }
+
+  this.handleDragEnd();
 };
 
 Game.prototype.showItemTooltip = function(e, item) {
@@ -286,7 +433,7 @@ Game.prototype.showItemTooltip = function(e, item) {
   tooltip.innerHTML = `
     <div class="tooltip-name">${item.name}</div>
     <div class="tooltip-rarity ${item.rarity}">${item.rarity.toUpperCase()}</div>
-    <div class="tooltip-stats">${this.formatItemStatsTooltip(item.stats)}</div>
+    <div class="tooltip-stats">${this.formatItemStatsTooltip(item.stats, item)}</div>
   `;
   
   // Position tooltip
@@ -300,12 +447,17 @@ Game.prototype.hideItemTooltip = function() {
   tooltip.classList.add('hidden');
 };
 
-Game.prototype.formatItemStatsTooltip = function(stats) {
+Game.prototype.formatItemStatsTooltip = function(stats, item) {
+  stats = stats || {};
   const parts = [];
   if(stats.attack) parts.push(`<div class="tooltip-stat">⚔️ ${stats.attack > 0 ? '+' : ''}${stats.attack} Attack</div>`);
   if(stats.hp) parts.push(`<div class="tooltip-stat">❤️ ${stats.hp > 0 ? '+' : ''}${stats.hp} Health</div>`);
   if(stats.energy) parts.push(`<div class="tooltip-stat">⚡ ${stats.energy > 0 ? '+' : ''}${stats.energy} Energy</div>`);
   if(stats.draw) parts.push(`<div class="tooltip-stat">📜 ${stats.draw > 0 ? '+' : ''}${stats.draw} Draw</div>`);
+  if(stats.heal) parts.push(`<div class="tooltip-stat">✨ ${stats.heal > 0 ? '+' : ''}${stats.heal} Heal</div>`);
+  if(item && item.uniqueEffect && item.uniqueEffect.description){
+    parts.push(`<div class="tooltip-stat">★ ${item.uniqueEffect.description}</div>`);
+  }
   return parts.join('');
 };
 
@@ -324,12 +476,17 @@ Game.prototype.getTotalEquipmentStats = function() {
   return total;
 };
 
-Game.prototype.formatItemStats = function(stats) {
+Game.prototype.formatItemStats = function(stats, item) {
+  stats = stats || {};
   const parts = [];
   if(stats.attack) parts.push(`${stats.attack > 0 ? '+' : ''}${stats.attack} ATK`);
   if(stats.hp) parts.push(`${stats.hp > 0 ? '+' : ''}${stats.hp} HP`);
   if(stats.energy) parts.push(`${stats.energy > 0 ? '+' : ''}${stats.energy} Energy`);
   if(stats.draw) parts.push(`${stats.draw > 0 ? '+' : ''}${stats.draw} Draw`);
+  if(stats.heal) parts.push(`${stats.heal > 0 ? '+' : ''}${stats.heal} Heal`);
+  if(item && item.uniqueEffect && item.uniqueEffect.description) {
+    parts.push(item.uniqueEffect.description);
+  }
   return parts.join(', ');
 };
 
@@ -361,25 +518,38 @@ Game.prototype.showLootDrop = function(lootItems) {
     div.className = `loot-item ${item.rarity}`;
     div.innerHTML = `
       <div class="item-name">${item.name}</div>
-      <div class="item-stats">${this.formatItemStats(item.stats)}</div>
+      <div class="item-stats">${this.formatItemStats(item.stats, item)}</div>
       <div class="item-rarity ${item.rarity}">${item.rarity}</div>
     `;
     div.addEventListener('click', () => {
-      const stored = this.addItemToBag(item, true);
-      if(stored) {
-        this.log(`Stored ${item.name} in bag.`);
-        const status = document.createElement('div');
-        status.className = 'loot-status stored';
-        status.textContent = '✓ Stored';
-        div.appendChild(status);
-      } else if(this.canEquipItem(item)) {
-        this.equipItem(item);
-        const status = document.createElement('div');
-        status.className = 'loot-status equipped';
-        status.textContent = '✓ Equipped';
-        div.appendChild(status);
+      if(item.type === 'potion'){
+        const storedPotion = this.addPotionToSlots(item);
+        if(storedPotion){
+          this.log(`Stored ${item.name} in potion slot.`);
+          const status = document.createElement('div');
+          status.className = 'loot-status stored';
+          status.textContent = '✓ Stored';
+          div.appendChild(status);
+        } else {
+          this.log('Potion slots are full.');
+        }
       } else {
-        this.log('Bag is full.');
+        const stored = this.addItemToBag(item, true);
+        if(stored) {
+          this.log(`Stored ${item.name} in bag.`);
+          const status = document.createElement('div');
+          status.className = 'loot-status stored';
+          status.textContent = '✓ Stored';
+          div.appendChild(status);
+        } else if(this.canEquipItem(item)) {
+          this.equipItem(item);
+          const status = document.createElement('div');
+          status.className = 'loot-status equipped';
+          status.textContent = '✓ Equipped';
+          div.appendChild(status);
+        } else {
+          this.log('Bag is full.');
+        }
       }
       div.style.opacity = '0.5';
       div.style.pointerEvents = 'none';

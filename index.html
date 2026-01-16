@@ -21,11 +21,13 @@
   <div id="gameScreen" class="screen hidden">
   <header>
     <h1>DeckRPG — Mini Roguelike</h1>
-    <div id="meta">
-      <div>Room: <span id="roomIndex">0</span>/<span id="roomCount">0</span></div>
-      <div>Gold: <span id="gold">0</span></div>
-      <button id="openInventoryBtn" class="inventory-btn">Inventory</button>
-    </div>
+      <div id="meta">
+        <div>Room: <span id="roomIndex">0</span>/<span id="roomCount">0</span></div>
+        <div>Gold: <span id="gold">0</span></div>
+        <div>Level: <span id="playerLevel">1</span></div>
+        <div>EXP: <span id="playerExp">0</span>/<span id="playerExpToLevel">0</span></div>
+        <button id="openInventoryBtn" class="inventory-btn">Inventory</button>
+      </div>
   </header>
 
   <main>
@@ -60,12 +62,7 @@
 
     <section id="combat" class="hidden">
       <div id="enemyArea">
-        <div id="enemySprite" class="sprite"></div>
-        <h2 id="enemyName"></h2>
-        <div class="hpbar">
-          <div id="enemyHp" class="hp"></div>
-        </div>
-        <div id="enemyStats"></div>
+        <div id="enemyList" class="enemy-list"></div>
       </div>
 
       <div id="playerArea">
@@ -74,6 +71,8 @@
           <div id="playerHp" class="hp"></div>
         </div>
         <div id="playerStats"></div>
+        <div id="playerAttributes"></div>
+        <div id="playerSubStats"></div>
       </div>
 
       <div id="handArea">
@@ -177,10 +176,17 @@
             <div id="bonusDisplay"></div>
           </div>
 
-          <div class="bag-panel">
-            <h3>Bag</h3>
-            <div id="bagGrid" class="bag-grid"></div>
-          </div>
+           <div class="bag-panel">
+             <h3>Bag</h3>
+             <div id="bagGrid" class="bag-grid"></div>
+           </div>
+
+           <div class="potion-panel">
+             <h3>Potions</h3>
+             <div id="potionSlots" class="potion-slots"></div>
+           </div>
+
+           <div id="inventoryTrash" class="trash-slot">🗑️ Drop Item</div>
           
           <!-- Tooltip for hover -->
           <div id="itemTooltip" class="item-tooltip hidden"></div>
@@ -200,10 +206,42 @@
 
   <div id="classSelectModal" class="modal hidden">
     <div class="modal-content class-select-modal">
-      <h2>Select 3 Classes</h2>
-      <div id="classSelectHint" class="class-select-hint">Choose three classes to begin your run.</div>
+      <h2>Select a Starter Passive</h2>
+      <div id="classSelectHint" class="class-select-hint">Choose one class to begin your run.</div>
       <div id="classOptions" class="class-options"></div>
-      <div id="classSelectCount" class="class-select-count">Selected 0/3</div>
+      <div id="classSelectCount" class="class-select-count">Selected 0/1</div>
+    </div>
+  </div>
+
+  <div id="campModal" class="modal hidden">
+    <div class="modal-content camp-modal">
+      <h2>Camp</h2>
+      <div class="camp-options">
+        <button id="campRestBtn" class="primary">Rest</button>
+        <button id="campRemoveBtn" class="menu-btn">Remove Card</button>
+        <button id="campUpgradeBtn" class="menu-btn">Upgrade Card</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="cardSelectModal" class="modal hidden">
+    <div class="modal-content card-select-modal">
+      <h2 id="cardSelectTitle">Choose a Card</h2>
+      <div id="cardSelectList" class="card-select-list"></div>
+      <button id="cardSelectCancel" class="menu-btn">Cancel</button>
+    </div>
+  </div>
+
+  <div id="levelUpModal" class="modal hidden">
+    <div class="modal-content level-up-modal">
+      <h2>Level Up!</h2>
+      <div class="level-up-hint">Choose one attribute to increase.</div>
+      <div class="level-up-options">
+        <button class="menu-btn" data-attr="str">Strength</button>
+        <button class="menu-btn" data-attr="dex">Dexterity</button>
+        <button class="menu-btn" data-attr="int">Intelligence</button>
+        <button class="menu-btn" data-attr="spd">Speed</button>
+      </div>
     </div>
   </div>
 
